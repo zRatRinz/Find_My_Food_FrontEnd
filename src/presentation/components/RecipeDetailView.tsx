@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Clock, Heart, Star, User, Utensils, ListChecks } from 'lucide-react';
+import { ArrowLeft, Clock, Heart, Star, User, ArrowRight } from 'lucide-react';
 import { RecipeDetail } from '../../domain/Recipe';
 import { RecipeRepository } from '../../infrastructure/repositories/RecipeRepository';
 import Link from 'next/link';
@@ -12,6 +12,7 @@ const RecipeDetailView = ({ recipeId }: { recipeId: number }) => {
   const [recipe, setRecipe] = useState<RecipeDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -29,11 +30,15 @@ const RecipeDetailView = ({ recipeId }: { recipeId: number }) => {
     fetchDetail();
   }, [recipeId]);
 
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-[#F9F7F2]">
         <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-gray-500 font-medium">Loading recipe details...</p>
+        <p className="text-gray-500 font-medium tracking-widest uppercase text-xs">Loading culinary masterpiece...</p>
       </div>
     );
   }
@@ -41,10 +46,10 @@ const RecipeDetailView = ({ recipeId }: { recipeId: number }) => {
   if (error || !recipe) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-[#F9F7F2] text-center">
-        <div className="bg-red-100 text-red-600 px-6 py-3 rounded-lg font-medium mb-4">
+        <div className="bg-red-50 text-red-600 px-8 py-4 rounded-2xl font-medium mb-6 border border-red-100">
           {error || 'Recipe not found'}
         </div>
-        <Link href="/" className="text-orange-500 font-bold hover:underline">
+        <Link href="/" className="text-orange-500 font-bold hover:underline uppercase tracking-widest text-xs">
           Back to Home
         </Link>
       </div>
@@ -52,57 +57,72 @@ const RecipeDetailView = ({ recipeId }: { recipeId: number }) => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F9F7F2] text-gray-900 font-sans">
+    <div className="min-h-screen bg-[#F9F7F2] text-gray-900 font-sans selection:bg-orange-200">
+      {/* Grain Texture Overlay */}
+      <div className="fixed inset-0 opacity-20 pointer-events-none z-50" 
+           style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}>
+      </div>
+
       {/* Navigation */}
-      <nav className="max-w-7xl mx-auto px-6 py-8">
+      <nav className="max-w-7xl mx-auto px-6 py-8 relative z-10">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-gray-500 hover:text-orange-500 transition-colors group"
+          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-orange-500 transition-colors group"
         >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+          <ArrowLeft className="w-3 h-3 group-hover:-translate-x-1 transition-transform" />
           <span>Back to recipes</span>
         </Link>
       </nav>
 
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-6 mb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 items-center">
-          <div className="lg:col-span-6 relative h-[40vh] lg:h-[50vh] overflow-hidden rounded-3xl shadow-2xl">
-            <img
-              src={recipe.imageUrl || 'https://via.placeholder.com/800x600?text=No+Image'}
-              alt={recipe.recipeName}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute top-6 right-6">
-              <button className={`p-4 rounded-full shadow-xl transition-all transform hover:scale-110 ${recipe.isLiked ? 'bg-red-500 text-white' : 'bg-white text-gray-400 hover:text-red-500'}`}>
-                <Heart className={`w-6 h-6 ${recipe.isLiked ? 'fill-current' : ''}`} />
-              </button>
+      <section className="max-w-7xl mx-auto px-6 mb-20 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          <div className="lg:col-span-7 relative group">
+            <div className="absolute -inset-4 bg-orange-200/30 rounded-[2rem] blur-2xl group-hover:bg-orange-200/50 transition-all duration-500"></div>
+            <div className="relative h-[50vh] lg:h-[60vh] overflow-hidden rounded-3xl shadow-2xl">
+              <img
+                src={recipe.imageUrl || 'https://via.placeholder.com/800x600?text=No+Image'}
+                alt={recipe.recipeName}
+                className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+              />
+              <div className="absolute top-6 right-6">
+                <button className={`p-4 rounded-full shadow-xl transition-all transform hover:scale-110 ${recipe.isLiked ? 'bg-red-500 text-white' : 'bg-white text-gray-400 hover:text-red-500'}`}>
+                  <Heart className={`w-6 h-6 ${recipe.isLiked ? 'fill-current' : ''}`} />
+                </button>
+              </div>
             </div>
           </div>
-          <div className="lg:col-span-6 lg:pl-12 mt-8 lg:mt-0">
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black leading-[0.9] tracking-tighter uppercase mb-8">
-              {recipe.recipeName}
-            </h1>
-            <p className="text-xl text-gray-600 leading-relaxed mb-8 font-medium">
-              {recipe.description || 'A delicious recipe crafted for health and taste.'}
-            </p>
+          
+          <div className="lg:col-span-5 lg:pl-8 space-y-8 animate-in fade-in slide-in-from-right-8 duration-700">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-orange-500 font-bold text-xs uppercase tracking-widest">
+                <div className="w-6 h-[1px] bg-orange-500"></div>
+                <span>Culinary Art</span>
+              </div>
+              <h1 className="text-5xl md:text-7xl font-serif italic leading-[1.1] text-gray-900">
+                {recipe.recipeName}
+              </h1>
+              <p className="text-lg text-gray-600 leading-relaxed font-light">
+                {recipe.description || 'A delicious recipe crafted for health and taste.'}
+              </p>
+            </div>
 
-            <div className="flex flex-wrap gap-6 mb-8">
-              <div className="space-y-2">
-                <p className="text-xs uppercase font-black text-gray-400 tracking-widest">Category</p>
+            <div className="flex flex-wrap gap-8">
+              <div className="space-y-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Category</p>
                 <div className="flex flex-wrap gap-2">
                   {recipe.categoryDetails.map((cat, idx) => (
-                    <span key={idx} className="text-sm font-bold text-orange-700 bg-orange-100 px-3 py-1 rounded-lg">
+                    <span key={idx} className="text-xs font-bold text-orange-600 bg-orange-50 px-3 py-1 rounded-full border border-orange-100">
                       {cat.tagName}
                     </span>
                   ))}
                 </div>
               </div>
-              <div className="space-y-2">
-                <p className="text-xs uppercase font-black text-gray-400 tracking-widest">Tags</p>
+              <div className="space-y-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Tags</p>
                 <div className="flex flex-wrap gap-2">
                   {recipe.tagDetails.map((tag, idx) => (
-                    <span key={idx} className="text-sm font-medium text-blue-700 bg-blue-100 px-3 py-1 rounded-lg">
+                    <span key={idx} className="text-xs font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
                       #{tag.tagName}
                     </span>
                   ))}
@@ -110,7 +130,7 @@ const RecipeDetailView = ({ recipeId }: { recipeId: number }) => {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 text-gray-500 font-bold uppercase tracking-widest text-xs">
+            <div className="flex items-center gap-3 text-gray-400 font-medium text-sm">
               <User className="w-4 h-4" />
               <span>By {recipe.username || 'Anonymous Chef'}</span>
             </div>
@@ -119,44 +139,48 @@ const RecipeDetailView = ({ recipeId }: { recipeId: number }) => {
       </section>
 
       {/* Information Bar */}
-      <section className="max-w-7xl mx-auto px-6 mb-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 border-t-4 border-b-4 border-black bg-white shadow-sm">
-          <div className="flex items-center justify-center gap-4 py-6 border-b-2 md:border-b-0 md:border-r-2 border-black">
-            <Clock className="w-6 h-6 text-orange-500" />
-            <div className="text-center">
-              <p className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Cooking Time</p>
-              <p className="text-2xl font-black">{recipe.cookingTimeMin} MINS</p>
+      <section className="max-w-7xl mx-auto px-6 mb-24 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-center gap-6 py-6 md:border-r border-gray-100">
+            <div className="p-3 bg-orange-50 rounded-2xl text-orange-500">
+              <Clock className="w-6 h-6" />
+            </div>
+            <div className="text-center md:text-left">
+              <p className="text-[10px] uppercase font-black text-gray-400 tracking-widest">Cooking Time</p>
+              <p className="text-3xl font-serif font-bold text-gray-900">{recipe.cookingTimeMin} <span className="text-lg font-light text-gray-500">MINS</span></p>
             </div>
           </div>
-          <div className="flex items-center justify-center gap-4 py-6">
-            <Star className="w-6 h-6 text-yellow-400 fill-current" />
-            <div className="text-center">
-              <p className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Popularity</p>
-              <p className="text-2xl font-black">{recipe.likeCount} LIKES</p>
+          <div className="flex items-center justify-center gap-6 py-6">
+            <div className="p-3 bg-yellow-50 rounded-2xl text-yellow-500">
+              <Star className="w-6 h-6 fill-current" />
+            </div>
+            <div className="text-center md:text-left">
+              <p className="text-[10px] uppercase font-black text-gray-400 tracking-widest">Popularity</p>
+              <p className="text-3xl font-serif font-bold text-gray-900">{recipe.likeCount} <span className="text-lg font-light text-gray-500">LIKES</span></p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Content Grid */}
-      <section className="max-w-7xl mx-auto px-6 pb-24">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
+      <section className="max-w-7xl mx-auto px-6 pb-32 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-20">
           {/* Ingredients - Left Column */}
-          <div className="lg:col-span-5 space-y-12">
+          <div className="lg:col-span-5 space-y-16">
             <div>
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-1 bg-orange-500"></div>
-                <h2 className="text-3xl font-black uppercase tracking-tighter">Ingredients</h2>
+              <div className="flex items-center gap-3 mb-10">
+                <div className="w-10 h-[2px] bg-orange-500"></div>
+                <h2 className="text-3xl font-serif font-bold text-gray-900">Ingredients</h2>
               </div>
-              
-              <div className="space-y-8">
-                <div className="space-y-4">
+
+              <div className="space-y-12">
+                <div className="space-y-6">
                   <h3 className="text-xs font-black text-orange-500 uppercase tracking-widest">Main Ingredients</h3>
-                  <ul className="space-y-3">
+                  <ul className="space-y-4">
                     {recipe.ingredients.filter(ing => ing.isMainIngredient).map((ing, idx) => (
-                      <li key={`main-ing-${idx}`} className="flex justify-between items-center group">
+                      <li key={`main-ing-${idx}`} className="flex justify-between items-center group py-2 border-b border-gray-100">
                         <span className="text-lg font-medium text-gray-800 group-hover:text-orange-500 transition-colors">{ing.ingredientName}</span>
-                        <span className="text-sm font-bold text-gray-400 bg-gray-100 px-2 py-1 rounded">
+                        <span className="text-sm font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
                           {ing.quantity} {ing.unitName}
                         </span>
                       </li>
@@ -164,14 +188,14 @@ const RecipeDetailView = ({ recipeId }: { recipeId: number }) => {
                   </ul>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Other Ingredients</h3>
-                  <ul className="space-y-3">
+                  <ul className="space-y-4">
                     {recipe.ingredients.filter(ing => !ing.isMainIngredient).map((ing, idx) => (
-                      <li key={`other-ing-${idx}`} className="flex justify-between items-center group">
+                      <li key={`other-ing-${idx}`} className="flex justify-between items-center group py-2 border-b border-gray-100">
                         <span className="text-lg font-medium text-gray-600 group-hover:text-orange-500 transition-colors">{ing.ingredientName}</span>
-                        <span className="text-sm font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded">
-                          {ing.quantity} {ing.unitName}
+                        <span className="text-sm font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                        {ing.quantity} {ing.unitName}
                         </span>
                       </li>
                     ))}
@@ -182,21 +206,21 @@ const RecipeDetailView = ({ recipeId }: { recipeId: number }) => {
           </div>
 
           {/* Steps - Right Column */}
-          <div className="lg:col-span-7 space-y-12">
+          <div className="lg:col-span-7 space-y-16">
             <div>
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-1 bg-orange-500"></div>
-                <h2 className="text-3xl font-black uppercase tracking-tighter">Cooking Steps</h2>
+              <div className="flex items-center gap-3 mb-10">
+                <div className="w-10 h-[2px] bg-orange-500"></div>
+                <h2 className="text-3xl font-serif font-bold text-gray-900">Cooking Steps</h2>
               </div>
-              
-              <div className="space-y-12">
+
+              <div className="space-y-16">
                 {recipe.steps.map((step, idx) => (
-                  <div key={`step-${idx}`} className="flex gap-8 items-start group">
-                    <div className="flex-shrink-0 text-6xl font-black text-orange-500 opacity-30 group-hover:opacity-100 transition-opacity leading-none">
+                  <div key={`step-${idx}`} className="flex gap-10 items-start group">
+                    <div className="flex-shrink-0 w-12 h-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-serif font-bold text-xl transition-all duration-300 group-hover:bg-orange-500 group-hover:text-white shadow-sm">
                       {step.stepNumber}
                     </div>
                     <div className="pt-2">
-                      <p className="text-xl text-gray-700 leading-relaxed font-medium">
+                      <p className="text-xl text-gray-700 leading-relaxed font-light">
                         {step.description}
                       </p>
                     </div>
