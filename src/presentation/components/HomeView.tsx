@@ -74,11 +74,31 @@ const HomeView = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [user, setUser] = useState<{ username: string; image_url: string | null; gender: string | null } | null>(null);
 
   useEffect(() => {
     const checkAuth = () => {
+      console.log('Checking auth status...');
       const token = localStorage.getItem('auth_token');
-      setIsLoggedIn(!!token);
+      const userInfo = localStorage.getItem('user_info');
+      
+      console.log('Token found:', !!token);
+      console.log('UserInfo found:', !!userInfo);
+      
+      if (token && userInfo) {
+        try {
+          const parsedUser = JSON.parse(userInfo);
+          console.log('User parsed successfully:', parsedUser.username);
+          setUser(parsedUser);
+          setIsLoggedIn(true);
+        } catch (e) {
+          console.error('Failed to parse user info:', e);
+          setIsLoggedIn(false);
+        }
+      } else {
+        setIsLoggedIn(false);
+      }
     };
     checkAuth();
 
@@ -96,6 +116,14 @@ const HomeView = () => {
 
     fetchRecipes();
   }, []);
+
+  const getProfileImage = (userData: any) => {
+    if (userData?.image_url) return userData.image_url;
+    const seed = encodeURIComponent(userData?.username || 'guest');
+    if (userData?.gender === 'Male') return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&gender=male&mouth=smile`;
+    if (userData?.gender === 'Female') return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&gender=female&mouth=smile`;
+    return `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`;
+  };
 
   const handleLogout = () => {
     authApi.logout();
@@ -173,13 +201,59 @@ const HomeView = () => {
               </span>
             </div>
             {isLoggedIn ? (
-              <button 
-                onClick={handleLogout}
-                className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-gray-900 hover:text-red-500 transition-colors border-b-2 border-transparent hover:border-red-500 pb-0.5 group"
-              >
-                <span>Logout</span>
-                <LogOut className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
-              </button>
+              <div className="flex items-center gap-4">
+                {/* Profile Section */}
+                <div className="relative">
+                  <div 
+                    className="group relative cursor-pointer"
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  >
+                    <div className="absolute -inset-1 bg-gradient-to-tr from-orange-500 to-yellow-200 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm"></div>
+                    <div className="relative w-9 h-9 rounded-full border-2 border-white shadow-sm overflow-hidden transition-transform duration-300 group-hover:scale-110">
+                      <img
+                        src={getProfileImage(user)}
+                        alt="User Profile"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Floating Identity Card */}
+                  {isProfileOpen && (
+                    <div className="absolute right-0 mt-3 w-40 bg-white/90 backdrop-blur-md border border-gray-100 rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-200 overflow-hidden">
+                      <div className="p-3">
+                        <div className="flex flex-col items-start space-y-2">
+                          <h4 className="text-sm font-serif italic text-gray-900 truncate">
+                            {user?.username || 'Guest User'}
+                          </h4>
+                          
+                          <div className="w-full border-t border-gray-100 pt-2">
+                            <Link 
+                              href="/profile" 
+                              className="block text-[10px] font-bold text-gray-500 hover:text-orange-500 transition-colors relative group py-1"
+                            >
+                              View Profile
+                              <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-orange-500 transition-all duration-300 group-hover:w-full"></span>
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Elegant Divider */}
+                <div className="w-[1px] h-4 bg-gray-200"></div>
+
+                {/* Logout Button */}
+                <button 
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-gray-900 hover:text-red-500 transition-colors border-b-2 border-transparent hover:border-red-500 pb-0.5 group"
+                >
+                  <span>Logout</span>
+                  <LogOut className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </div>
             ) : (
               <Link 
                 href="/login" 

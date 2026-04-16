@@ -32,10 +32,14 @@ export default function LoginPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await authApi.login(username, password);
-      localStorage.setItem('auth_token', data.access_token);
-      router.push('/');
-      router.refresh();
+      const response = await authApi.login(username, password);
+      
+      // บันทึกทั้ง Token และ ข้อมูลผู้ใช้
+      localStorage.setItem('auth_token', response.access_token);
+      localStorage.setItem('user_info', JSON.stringify(response.data));
+      
+      // ใช้ window.location.href เพื่อ Force Reload หน้า Home ให้ดึงข้อมูลล่าสุดจาก localStorage
+      window.location.href = '/';
     } catch (err: any) {
       setError(err.message || 'Invalid username or password');
     } finally {

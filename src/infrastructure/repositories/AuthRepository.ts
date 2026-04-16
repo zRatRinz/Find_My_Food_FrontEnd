@@ -1,14 +1,11 @@
-import { StandardResponse } from '../dtos/CommonDTO';
+import { AuthResponse, AuthUser } from '@/domain/Auth';
+import { IAuthRepository } from '@/domain/AuthRepository';
+import { AuthDTO, AuthMapper } from '../dtos/AuthDTO';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export interface LoginResponse {
-  access_token: string;
-  token_type: string;
-}
-
-export class AuthRepository {
-  async login(username: string, password: string): Promise<LoginResponse> {
+export class AuthRepository implements IAuthRepository {
+  async login(username: string, password: string): Promise<AuthResponse & { data: AuthUser }> {
     try {
       const formData = new FormData();
       formData.append('username', username);
@@ -20,14 +17,19 @@ export class AuthRepository {
         body: formData,
       });
 
-      const data = await response.json();
+      const result = await response.json();
 
       if (!response.ok) {
-        // Use the 'message' field from the StandardResponse format
-        throw new Error(data.message || `Login failed: ${response.statusText}`);
+        throw new Error(result.message || `Login failed: ${response.statusText}`);
       }
 
-      return data as LoginResponse;
+      const dto: AuthDTO = result;
+      
+      return {
+        access_token: dto.access_token,
+        token_type: dto.token_type,
+        data: AuthMapper.toDomainUser(dto),
+      };
     } catch (error) {
       throw error;
     }
@@ -36,5 +38,10 @@ export class AuthRepository {
   logout(): void {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user_info');
+  }
+
+  async checkAuth(): Promise<boolean> {
+    const token = localStorage.getItem('auth_token');
+    return !!token;
   }
 }
