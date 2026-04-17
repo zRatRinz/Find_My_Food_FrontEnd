@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Heart, Star, Search, ShoppingCart, Menu, Loader2, ArrowRight, LogOut } from 'lucide-react';
-import { Recipe } from '../../domain/Recipe';
-import { RecipeRepository } from '../../infrastructure/repositories/RecipeRepository';
-import { AuthRepository } from '../../infrastructure/repositories/AuthRepository';
+import { Recipe } from '../../domain/recipe/Recipe';
+import { RecipeRepository } from '../../infrastructure/recipe/RecipeRepository';
+import { AuthRepository } from '../../infrastructure/auth/AuthRepository';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 

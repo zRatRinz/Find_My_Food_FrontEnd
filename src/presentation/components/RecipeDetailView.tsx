@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Clock, Heart, Star, User, ArrowRight } from 'lucide-react';
-import { RecipeDetail } from '../../domain/Recipe';
-import { RecipeRepository } from '../../infrastructure/repositories/RecipeRepository';
+import { RecipeDetail } from '../../domain/recipe/Recipe';
+import { RecipeRepository } from '../../infrastructure/recipe/RecipeRepository';
 import Link from 'next/link';
 
 const recipeApi = new RecipeRepository();

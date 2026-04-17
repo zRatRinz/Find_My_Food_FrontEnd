@@ -1,6 +1,6 @@
-import { User } from '@/domain/User';
-import { IUserRepository } from '@/domain/UserRepository';
-import { UserDTO, UserMapper } from '../dtos/UserDTO';
+import { User } from '@/domain/user/User';
+import { IUserRepository } from '@/domain/user/UserRepository';
+import { UserDTO, UserMapper } from './UserDTO';
 
 export class UserRepository implements IUserRepository {
   private baseUrl = process.env.NEXT_PUBLIC_API_URL;

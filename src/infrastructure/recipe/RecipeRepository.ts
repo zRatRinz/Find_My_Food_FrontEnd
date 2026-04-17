@@ -1,7 +1,7 @@
-import { Recipe, RecipeDetail } from '../../domain/Recipe';
-import { IRecipeRepository } from '../../domain/RecipeRepository';
-import { RecipeDTO, RecipeDetailDTO, RecipeMapper } from '../dtos/RecipeDTO';
-import { StandardResponse } from '../dtos/CommonDTO';
+import { Recipe, RecipeDetail } from '../../domain/recipe/Recipe';
+import { IRecipeRepository } from '../../domain/recipe/RecipeRepository';
+import { RecipeDTO, RecipeDetailDTO, RecipeMapper } from './RecipeDTO';
+import { StandardResponse } from '../common/CommonDTO';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 

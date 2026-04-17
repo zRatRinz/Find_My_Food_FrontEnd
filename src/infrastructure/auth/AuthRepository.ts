@@ -1,6 +1,6 @@
-import { AuthResponse, AuthUser } from '@/domain/Auth';
-import { IAuthRepository } from '@/domain/AuthRepository';
-import { AuthDTO, AuthMapper } from '../dtos/AuthDTO';
+import { AuthResponse, AuthUser } from '@/domain/auth/Auth';
+import { IAuthRepository } from '@/domain/auth/AuthRepository';
+import { AuthDTO, AuthMapper } from './AuthDTO';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 

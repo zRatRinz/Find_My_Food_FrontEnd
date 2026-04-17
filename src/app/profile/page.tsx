@@ -4,8 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { Mail, User as UserIcon, ArrowLeft, Calendar, VenusAndMars } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User } from '@/domain/User';
-import { UserRepository } from '@/infrastructure/repositories/UserRepository';
+import { User } from '@/domain/user/User';
+import { UserRepository } from '@/infrastructure/user/UserRepository';
 
 const userRepo = new UserRepository();
 

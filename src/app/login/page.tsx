@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, User, Lock, ArrowRight, ChevronLeft, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { AuthRepository } from '@/infrastructure/repositories/AuthRepository';
+import { AuthRepository } from '@/infrastructure/auth/AuthRepository';
 
 const authApi = new AuthRepository();
 
