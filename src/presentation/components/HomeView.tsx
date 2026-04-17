@@ -13,7 +13,7 @@ const RecipeCard = ({ recipe, variant = 'standard' }: { recipe: Recipe, variant?
   return (
     <Link
       href={`/recipe/${recipe.recipeId}`}
-      className="group bg-luxury-surface rounded-xl overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-orange-500/10 border border-luxury-border shadow-sm dark:shadow-none hover:border-orange-200 dark:hover:border-orange-900 flex flex-col"
+      className="group bg-luxury-surface rounded-xl overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-luxury-accent-start/10 border border-luxury-border shadow-sm dark:shadow-none hover:border-luxury-accent-start/30 dark:hover:border-luxury-accent-start/50 flex flex-col"
     >
       {/* Image Section */}
       <div className="relative aspect-[4/5] overflow-hidden bg-gray-100 dark:bg-gray-800">
@@ -36,13 +36,13 @@ const RecipeCard = ({ recipe, variant = 'standard' }: { recipe: Recipe, variant?
 
       {/* Content Section */}
       <div className="p-4 flex flex-col flex-grow">
-        <h3 className="text-base font-serif font-bold text-luxury-text line-clamp-2 h-12 mb-2 leading-snug group-hover:text-orange-600 transition-colors">
+        <h3 className="text-base font-serif font-bold text-luxury-text line-clamp-2 h-12 mb-2 leading-snug group-hover:text-luxury-accent-start transition-colors">
           {recipe.recipeName}
         </h3>
 
         <div className="flex flex-wrap items-start gap-1.5 mb-4 h-10 overflow-hidden">
           {recipe.tags.slice(0, 5).map((tag, idx) => (
-            <span key={idx} className="text-[9px] font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-1.5 py-0.5 rounded border border-orange-100 dark:border-orange-900/30 leading-none">
+            <span key={idx} className="text-[9px] font-bold uppercase tracking-wider text-luxury-accent-start dark:text-luxury-accent-end bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded border border-blue-100 dark:border-blue-900/30 leading-none">
               {tag}
             </span>
           ))}
@@ -77,7 +77,7 @@ const HomeView = () => {
       try {
         setIsLoading(true);
         setError(null);
-        
+
         if (query) {
           const data = await recipeApi.getRecipesByName(query);
           setRecipes(data);
@@ -96,19 +96,18 @@ const HomeView = () => {
   }, [searchParams]);
 
   return (
-    <div className="font-sans selection:bg-orange-200">
-      {/* Grain Texture Overlay */}
-      <div className="fixed inset-0 opacity-20 pointer-events-none z-50"
-           style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}>
-      </div>
+    <div className="relative font-sans selection:bg-blue-200 overflow-hidden">
+      {/* Atmospheric Blobs for Header/Footer Glow */}
+      <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-100/50 dark:bg-blue-900/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-100/50 dark:bg-purple-900/20 rounded-full blur-3xl pointer-events-none"></div>
 
       {/* --- CATEGORY BAR --- */}
       <div className="bg-luxury-surface border-b border-luxury-border overflow-x-auto transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-6 py-4 flex gap-8 text-[10px] font-black uppercase tracking-widest text-luxury-text-muted whitespace-nowrap">
           {['All Recipes', 'Low Calorie', 'High Protein', 'Vegan', 'Thai Traditional', 'Desserts', 'Breakfast', 'Dinner'].map((cat) => (
-            <a key={cat} href="#" className="hover:text-orange-500 transition-colors relative group">
+            <a key={cat} href="#" className="hover:text-luxury-accent-start transition-colors relative group">
               {cat}
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-orange-500 transition-all duration-300 group-hover:w-full"></span>
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-luxury-accent-start transition-all duration-300 group-hover:w-full"></span>
             </a>
           ))}
         </div>
@@ -125,18 +124,18 @@ const HomeView = () => {
             alt="Featured"
           />
           <div className="relative z-20 h-full flex flex-col justify-center px-12 text-white max-w-2xl">
-            <div className="flex items-center gap-2 text-orange-400 font-bold text-xs uppercase tracking-widest mb-4">
-              <div className="w-6 h-[1px] bg-orange-400"></div>
+            <div className="flex items-center gap-2 text-luxury-accent-start font-bold text-xs uppercase tracking-widest mb-4">
+              <div className="w-6 h-[1px] bg-luxury-accent-start"></div>
               <span>Featured Story</span>
             </div>
             <h2 className="text-5xl md:text-7xl font-serif italic leading-tight mb-6">
               The Art of <br />
-              <span className="not-italic font-black uppercase tracking-tighter text-orange-500">Healthy Living</span>
+              <span className="not-italic font-black uppercase tracking-tighter bg-luxury-gradient bg-clip-text text-transparent">Healthy Living</span>
             </h2>
             <p className="text-lg font-light text-gray-200 mb-8 max-w-md leading-relaxed">
               Explore our curated collection of nutrient-dense recipes designed to fuel your body and delight your senses.
             </p>
-            <button className="w-fit px-8 py-4 bg-white text-gray-900 rounded-full font-bold uppercase tracking-widest text-xs hover:bg-orange-500 hover:text-white transition-all duration-300 flex items-center gap-3 group">
+            <button className="w-fit px-8 py-4 bg-white text-gray-900 rounded-full font-bold uppercase tracking-widest text-xs hover:bg-luxury-gradient hover:text-white transition-all duration-300 flex items-center gap-3 group">
               Explore Collection
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </button>
@@ -145,7 +144,7 @@ const HomeView = () => {
 
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-32">
-            <Loader2 className="w-10 h-10 text-orange-500 animate-spin mb-4" />
+            <Loader2 className="w-10 h-10 text-luxury-accent-start animate-spin mb-4" />
             <p className="text-gray-400 font-medium tracking-widest uppercase text-xs">Curating Recipes...</p>
           </div>
         ) : error ? (
@@ -155,7 +154,7 @@ const HomeView = () => {
             </div>
             <button
               onClick={() => window.location.reload()}
-              className="text-orange-500 font-bold hover:underline uppercase tracking-widest text-xs"
+              className="text-luxury-accent-start font-bold hover:underline uppercase tracking-widest text-xs"
             >
               Try Again
             </button>

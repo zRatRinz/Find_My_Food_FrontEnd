@@ -8,6 +8,8 @@
   --color-luxury-text: #111827;
   --color-luxury-text-muted: #9CA3AF;
   --color-luxury-border: rgba(229, 231, 235, 0.6);
+  --color-luxury-accent-start: #4776E6;
+  --color-luxury-accent-end: #8E54E2;
 }
 
 .dark {
@@ -16,6 +18,10 @@
   --color-luxury-text: #F3F4F6;
   --color-luxury-text-muted: #9CA3AF;
   --color-luxury-border: rgba(31, 41, 55, 0.6);
+}
+
+@utility bg-luxury-gradient {
+  background-image: linear-gradient(135deg, var(--color-luxury-accent-start), var(--color-luxury-accent-end));
 }
 
 :root {
