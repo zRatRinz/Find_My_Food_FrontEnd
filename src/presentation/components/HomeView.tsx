@@ -13,10 +13,10 @@ const RecipeCard = ({ recipe, variant = 'standard' }: { recipe: Recipe, variant?
   return (
     <Link
       href={`/recipe/${recipe.recipeId}`}
-      className="group bg-white rounded-xl overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-orange-500/10 border border-gray-200/60 shadow-sm hover:border-orange-200 flex flex-col"
+      className="group bg-luxury-surface rounded-xl overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-orange-500/10 border border-luxury-border shadow-sm dark:shadow-none hover:border-orange-200 dark:hover:border-orange-900 flex flex-col"
     >
       {/* Image Section */}
-      <div className="relative aspect-[4/5] overflow-hidden bg-gray-100">
+      <div className="relative aspect-[4/5] overflow-hidden bg-gray-100 dark:bg-gray-800">
         <img
           src={recipe.imageUrl || 'https://via.placeholder.com/500?text=No+Image'}
           alt={recipe.recipeName}
@@ -28,7 +28,7 @@ const RecipeCard = ({ recipe, variant = 'standard' }: { recipe: Recipe, variant?
           onClick={(e) => {
             e.preventDefault();
           }}
-          className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full text-gray-400 hover:text-red-500 transition-all duration-300 shadow-sm hover:scale-110"
+          className="absolute top-3 right-3 p-2 bg-white/90 dark:bg-[#1A1A1A]/90 backdrop-blur-sm rounded-full text-gray-400 hover:text-red-500 transition-all duration-300 shadow-sm hover:scale-110"
         >
           <Heart className={`w-4 h-4 ${recipe.isLiked ? 'fill-red-500 text-red-500' : ''}`} />
         </button>
@@ -36,28 +36,28 @@ const RecipeCard = ({ recipe, variant = 'standard' }: { recipe: Recipe, variant?
 
       {/* Content Section */}
       <div className="p-4 flex flex-col flex-grow">
-        <h3 className="text-base font-serif font-bold text-gray-900 line-clamp-2 h-12 mb-2 leading-snug group-hover:text-orange-600 transition-colors">
+        <h3 className="text-base font-serif font-bold text-luxury-text line-clamp-2 h-12 mb-2 leading-snug group-hover:text-orange-600 transition-colors">
           {recipe.recipeName}
         </h3>
 
         <div className="flex flex-wrap items-start gap-1.5 mb-4 h-10 overflow-hidden">
           {recipe.tags.slice(0, 5).map((tag, idx) => (
-            <span key={idx} className="text-[9px] font-bold uppercase tracking-wider text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100 leading-none">
+            <span key={idx} className="text-[9px] font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-1.5 py-0.5 rounded border border-orange-100 dark:border-orange-900/30 leading-none">
               {tag}
             </span>
           ))}
           {recipe.tags.length > 5 && (
-            <span className="text-[9px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100 leading-none">...</span>
+            <span className="text-[9px] font-bold uppercase tracking-wider text-luxury-text-muted bg-gray-50 dark:bg-gray-800 px-1.5 py-0.5 rounded border border-luxury-border leading-none">...</span>
           )}
         </div>
 
-        <div className="mt-auto pt-3 border-t border-gray-200 flex items-center justify-between">
+        <div className="mt-auto pt-3 border-t border-luxury-border flex items-center justify-between">
           <div className="flex items-center gap-1">
             <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-            <span className="text-xs font-medium text-gray-500">{recipe.likeCount}</span>
+            <span className="text-xs font-medium text-luxury-text-muted">{recipe.likeCount}</span>
           </div>
           {recipe.cookingTimeMin && (
-            <span className="text-xs font-bold text-gray-900">{recipe.cookingTimeMin} min</span>
+            <span className="text-xs font-bold text-luxury-text">{recipe.cookingTimeMin} min</span>
           )}
         </div>
       </div>
@@ -103,8 +103,8 @@ const HomeView = () => {
       </div>
 
       {/* --- CATEGORY BAR --- */}
-      <div className="bg-white border-b border-gray-100 overflow-x-auto">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex gap-8 text-[10px] font-black uppercase tracking-widest text-gray-400 whitespace-nowrap">
+      <div className="bg-luxury-surface border-b border-luxury-border overflow-x-auto transition-colors duration-300">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex gap-8 text-[10px] font-black uppercase tracking-widest text-luxury-text-muted whitespace-nowrap">
           {['All Recipes', 'Low Calorie', 'High Protein', 'Vegan', 'Thai Traditional', 'Desserts', 'Breakfast', 'Dinner'].map((cat) => (
             <a key={cat} href="#" className="hover:text-orange-500 transition-colors relative group">
               {cat}
@@ -150,7 +150,7 @@ const HomeView = () => {
           </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-32 text-center">
-            <div className="bg-red-50 text-red-500 px-8 py-4 rounded-2xl font-medium mb-6 border border-red-100">
+            <div className="bg-red-50 dark:bg-red-900/20 text-red-500 px-8 py-4 rounded-2xl font-medium mb-6 border border-red-100 dark:border-red-900/30">
               {error}
             </div>
             <button
