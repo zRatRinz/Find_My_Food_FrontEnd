@@ -5,6 +5,7 @@ import { Eye, EyeOff, User, Lock, ArrowRight, ChevronLeft, AlertCircle } from 'l
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AuthRepository } from '@/infrastructure/auth/AuthRepository';
+import { APP_CONFIG } from '@/infrastructure/common/config';
 
 const authApi = new AuthRepository();
 
@@ -19,9 +20,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     setIsMounted(true);
-    
-    // Check if user is already authenticated
-    const token = localStorage.getItem('auth_token');
+
+    // Check if user is already authenticated using config key
+    const token = localStorage.getItem(APP_CONFIG.auth.tokenKey);
     if (token) {
       router.push('/');
     }
@@ -33,12 +34,12 @@ export default function LoginPage() {
     setError(null);
     try {
       const response = await authApi.login(username, password);
-      
-      // บันทึกทั้ง Token และ ข้อมูลผู้ใช้
-      localStorage.setItem('auth_token', response.access_token);
-      localStorage.setItem('user_info', JSON.stringify(response.data));
-      
-      // ใช้ window.location.href เพื่อ Force Reload หน้า Home ให้ดึงข้อมูลล่าสุดจาก localStorage
+
+      // Save Token and User Info using centralized config keys
+      localStorage.setItem(APP_CONFIG.auth.tokenKey, response.access_token);
+      localStorage.setItem(APP_CONFIG.auth.userKey, JSON.stringify(response.data));
+
+      // Force Reload to Home to ensure AuthContext picks up the latest session
       window.location.href = '/';
     } catch (err: any) {
       setError(err.message || 'Invalid username or password');
@@ -123,17 +124,17 @@ export default function LoginPage() {
               <div className="space-y-6">
                 {/* Username or Email Field */}
                 <div className="group relative">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-luxury-text-muted mb-2 group-focus-within:text-luxury-accent-start transition-colors">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-luxury-text-muted mb-2 group-focus-within:text-luxury-accent-start transition-colors duration-300">
                     Username or Email
                   </label>
                   <div className="relative">
-                    <User className="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 dark:text-gray-600 group-focus-within:text-luxury-accent-start transition-colors" />
+                    <User className="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 dark:text-gray-600 group-focus-within:text-luxury-accent-start transition-colors duration-300" />
                     <input
                       type="text"
                       required
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      className="w-full pl-8 pr-4 py-4 bg-transparent border-b border-luxury-border focus:border-luxury-accent-start outline-none transition-all text-luxury-text placeholder-gray-300 dark:placeholder-gray-600 font-light"
+                      className="w-full pl-8 pr-4 py-4 bg-transparent border-b border-luxury-border focus:border-luxury-accent-start outline-none transition-all duration-300 text-luxury-text placeholder-gray-300 dark:placeholder-gray-600 font-light"
                       placeholder="Enter username or email"
                     />
                   </div>
@@ -142,7 +143,7 @@ export default function LoginPage() {
                 {/* Password Field */}
                 <div className="group relative">
                   <div className="flex justify-between items-end mb-2">
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-luxury-text-muted group-focus-within:text-luxury-accent-start transition-colors">
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-luxury-text-muted group-focus-within:text-luxury-accent-start transition-colors duration-300">
                       Password
                     </label>
                     <a href="#" className="text-[10px] font-bold text-luxury-accent-start hover:text-luxury-accent-end transition-colors uppercase tracking-tighter">
@@ -150,19 +151,19 @@ export default function LoginPage() {
                     </a>
                   </div>
                   <div className="relative">
-                    <Lock className="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 dark:text-gray-600 group-focus-within:text-luxury-accent-start transition-colors" />
+                    <Lock className="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 dark:text-gray-600 group-focus-within:text-luxury-accent-start transition-colors duration-300" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-8 pr-12 py-4 bg-transparent border-b border-luxury-border focus:border-luxury-accent-start outline-none transition-all text-luxury-text placeholder-gray-300 dark:placeholder-gray-600 font-light"
+                      className="w-full pl-8 pr-12 py-4 bg-transparent border-b border-luxury-border focus:border-luxury-accent-start outline-none transition-all duration-300 text-luxury-text placeholder-gray-300 dark:placeholder-gray-600 font-light"
                       placeholder="••••••••"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-gray-300 dark:text-gray-600 hover:text-luxury-accent-start transition-colors"
+                      className="absolute right-0 top-1/2 -translate-y-1/2 p-2 text-gray-300 dark:text-gray-600 hover:text-luxury-accent-start transition-colors duration-300"
                     >
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
@@ -177,7 +178,7 @@ export default function LoginPage() {
                     <span className="text-[10px] font-black uppercase tracking-widest text-red-400 leading-none mb-1">
                       Authentication Error
                     </span>
-                    <span className="text-xs font-medium text-red-700 dark:text-red-400 leading-relaxed">
+                    <span className="text-xs font-medium text-red-600 dark:text-red-400 leading-relaxed">
                       {error}
                     </span>
                   </div>
@@ -188,7 +189,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="group relative w-full overflow-hidden bg-luxury-gradient text-white py-5 rounded-full font-bold uppercase tracking-widest text-xs transition-all duration-300 hover:opacity-90 active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-3 shadow-2xl shadow-luxury-accent-start/20"
+                className="group relative w-full overflow-hidden bg-luxury-gradient text-white py-5 rounded-full font-bold uppercase tracking-widest text-xs transition-all duration-300 hover:opacity-90 hover:shadow-luxury-accent-start/40 active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-3 shadow-2xl shadow-luxury-accent-start/20"
               >
                 {isLoading ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

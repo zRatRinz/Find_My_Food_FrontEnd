@@ -1,8 +1,10 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import { AuthRepository } from '@/infrastructure/auth/AuthRepository';
 import { User } from '@/domain/user/User';
+import { APP_CONFIG } from '@/infrastructure/common/config';
 
 interface AuthContextType {
   user: User | null;
@@ -16,13 +18,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const authApi = new AuthRepository();
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     const checkAuth = () => {
-      const token = localStorage.getItem('auth_token');
-      const userInfo = localStorage.getItem('user_info');
+      const token = localStorage.getItem(APP_CONFIG.auth.tokenKey);
+      const userInfo = localStorage.getItem(APP_CONFIG.auth.userKey);
 
       if (token && userInfo) {
         try {
@@ -44,6 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     authApi.logout();
     setUser(null);
     setIsLoggedIn(false);
+    router.push('/login');
   };
 
   const getProfileImage = (userData: any) => {

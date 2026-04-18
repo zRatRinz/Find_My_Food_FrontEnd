@@ -5,6 +5,7 @@ import { AuthProvider } from "@/presentation/contexts/AuthContext";
 import { ThemeProvider } from "@/presentation/contexts/ThemeContext";
 import Header from "@/presentation/components/Header";
 import Footer from "@/presentation/components/Footer";
+import { APP_CONFIG } from '@/infrastructure/common/config';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Find My Food",
-  description: "Elevating the culinary experience through design and nutrition",
+  title: APP_CONFIG.app.name,
+  description: APP_CONFIG.app.description,
 };
 
 export const viewport = {

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { User } from '@/domain/user/User';
 import { UserRepository } from '@/infrastructure/user/UserRepository';
+import { APP_CONFIG } from '@/infrastructure/common/config';
 
 const userRepo = new UserRepository();
 
@@ -62,14 +63,7 @@ export default function ProfilePage() {
   const getProfileImage = (user: User) => {
     if (user.image_url) return user.image_url;
 
-    let gender = null;
-    try {
-      const storedUser = JSON.parse(localStorage.getItem('user_info') || '{}');
-      gender = storedUser.gender;
-    } catch (e) {
-      console.error('Error reading gender from localStorage:', e);
-    }
-
+    const gender = user.gender;
     const seed = encodeURIComponent(user.username);
     // เพิ่ม &mouth=smile เพื่อให้ Avatar ยิ้มแย้มเสมอ
     if (gender === 'Male') return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&gender=male&mouth=smile`;
@@ -161,14 +155,7 @@ export default function ProfilePage() {
                       <span className="text-[10px] font-bold uppercase tracking-widest">Gender</span>
                     </div>
                     <p className="text-lg font-serif text-luxury-text group-hover:text-luxury-accent-start transition-colors">
-                      {(() => {
-                        try {
-                          const storedUser = JSON.parse(localStorage.getItem('user_info') || '{}');
-                          return storedUser.gender || 'Not specified';
-                        } catch {
-                          return 'Not specified';
-                        }
-                      })()}
+                      {user.gender || 'Not specified'}
                     </p>
                   </div>
 
@@ -179,7 +166,7 @@ export default function ProfilePage() {
                       <span className="text-[10px] font-bold uppercase tracking-widest">Birth Date</span>
                     </div>
                     <p className="text-lg font-serif text-luxury-text group-hover:text-luxury-accent-start transition-colors">
-                      Not specified
+                      {user.birth_date || 'Not specified'}
                     </p>
                   </div>
                 </div>

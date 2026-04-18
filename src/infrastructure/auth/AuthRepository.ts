@@ -1,10 +1,11 @@
 import { AuthResponse, AuthUser } from '@/domain/auth/Auth';
 import { IAuthRepository } from '@/domain/auth/AuthRepository';
 import { AuthDTO, AuthMapper } from './AuthDTO';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+import { APP_CONFIG } from '@/infrastructure/common/config';
 
 export class AuthRepository implements IAuthRepository {
+  private baseUrl = APP_CONFIG.api.baseUrl;
+
   async login(username: string, password: string): Promise<AuthResponse & { data: AuthUser }> {
     try {
       const formData = new FormData();
@@ -12,7 +13,7 @@ export class AuthRepository implements IAuthRepository {
       formData.append('password', password);
       formData.append('grant_type', 'password');
 
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      const response = await fetch(`${this.baseUrl}/auth/login`, {
         method: 'POST',
         body: formData,
       });
@@ -24,7 +25,7 @@ export class AuthRepository implements IAuthRepository {
       }
 
       const dto: AuthDTO = result;
-      
+
       return {
         access_token: dto.access_token,
         token_type: dto.token_type,
@@ -36,12 +37,12 @@ export class AuthRepository implements IAuthRepository {
   }
 
   logout(): void {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_info');
+    localStorage.removeItem(APP_CONFIG.auth.tokenKey);
+    localStorage.removeItem(APP_CONFIG.auth.userKey);
   }
 
   async checkAuth(): Promise<boolean> {
-    const token = localStorage.getItem('auth_token');
+    const token = localStorage.getItem(APP_CONFIG.auth.tokenKey);
     return !!token;
   }
 }

@@ -2,17 +2,15 @@ import { Recipe, RecipeDetail } from '../../domain/recipe/Recipe';
 import { IRecipeRepository } from '../../domain/recipe/RecipeRepository';
 import { RecipeDTO, RecipeDetailDTO, RecipeMapper } from './RecipeDTO';
 import { StandardResponse } from '../common/CommonDTO';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+import { APP_CONFIG } from '../common/config';
 
 export class RecipeRepository implements IRecipeRepository {
+  private baseUrl = APP_CONFIG.api.baseUrl;
+
   async getAllRecipes(): Promise<Recipe[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/recipe/getAllRecipe`, {
+      const response = await fetch(`${this.baseUrl}/recipe/getAllRecipe`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
       });
 
       if (!response.ok) {
@@ -38,11 +36,8 @@ export class RecipeRepository implements IRecipeRepository {
 
   async getRecipesByName(name: string): Promise<Recipe[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/recipegetRecipeByName/${encodeURIComponent(name)}`, {
+      const response = await fetch(`${this.baseUrl}/recipegetRecipeByName/${encodeURIComponent(name)}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
       });
 
       if (!response.ok) {
@@ -68,11 +63,8 @@ export class RecipeRepository implements IRecipeRepository {
 
   async getRecipeById(id: number): Promise<RecipeDetail> {
     try {
-      const response = await fetch(`${API_BASE_URL}/recipe/getRecipeDetailById/${id}`, {
+      const response = await fetch(`${this.baseUrl}/recipe/getRecipeDetailById/${id}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
       });
 
       if (!response.ok) {

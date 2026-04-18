@@ -219,7 +219,7 @@ const RecipeDetailView = ({ recipeId }: { recipeId: number }) => {
                       {step.stepNumber}
                     </div>
                     <div className="pt-2">
-                      <p className="text-xl text-luxury-text-muted leading-relaxed font-light">
+                      <p className="text-xl text-luxury-text-muted leading-relaxed font-light transition-colors duration-300 group-hover:text-luxury-text">
                         {step.description}
                       </p>
                     </div>
