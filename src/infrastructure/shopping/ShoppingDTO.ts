@@ -9,6 +9,19 @@ export interface ShoppingItemDTO {
   note: string;
 }
 
+export interface AddShoppingItemInNewShoppingListDTO {
+  item_name: string;
+  quantity: number;
+  unit_id: number;
+  note: string;
+}
+
+export interface CreateNewShoppingListDTO {
+  shopping_type: 'market' | 'recipe';
+  list_name: string;
+  items: AddShoppingItemInNewShoppingListDTO[];
+}
+
 export interface ShoppingListDTO {
   shopping_list_id: number;
   list_name: string;
@@ -19,6 +32,14 @@ export interface ShoppingListDTO {
 
 export interface UpdateShoppingItemStatusDTO {
   is_check: boolean;
+}
+
+export interface AddShoppingItemToShoppingListDTO {
+  item_name: string;
+  quantity: number;
+  unit_id: number;
+  shopping_list_id: number;
+  note: string;
 }
 
 export class ShoppingMapper {
