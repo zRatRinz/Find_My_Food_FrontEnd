@@ -7,10 +7,19 @@ import { APP_CONFIG } from '../common/config';
 export class RecipeRepository implements IRecipeRepository {
   private baseUrl = APP_CONFIG.api.baseUrl;
 
+  private async getAuthHeaders() {
+    const token = localStorage.getItem(APP_CONFIG.auth.tokenKey);
+    return {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+  }
+
   async getAllRecipes(): Promise<Recipe[]> {
     try {
       const response = await fetch(`${this.baseUrl}/recipe/getAllRecipe`, {
         method: 'GET',
+        headers: await this.getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -38,6 +47,7 @@ export class RecipeRepository implements IRecipeRepository {
     try {
       const response = await fetch(`${this.baseUrl}/recipegetRecipeByName/${encodeURIComponent(name)}`, {
         method: 'GET',
+        headers: await this.getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -65,6 +75,7 @@ export class RecipeRepository implements IRecipeRepository {
     try {
       const response = await fetch(`${this.baseUrl}/recipe/getRecipeDetailById/${id}`, {
         method: 'GET',
+        headers: await this.getAuthHeaders(),
       });
 
       if (!response.ok) {

@@ -1,6 +1,7 @@
 import { User } from '@/domain/user/User';
 import { IUserRepository } from '@/domain/user/UserRepository';
-import { UserDTO, UserMapper } from './UserDTO';
+import { UserDTO, LikedRecipeListDTO, UserMapper } from './UserDTO';
+import { LikedRecipe } from '@/domain/recipe/LikedRecipe';
 import { APP_CONFIG } from '@/infrastructure/common/config';
 
 export class UserRepository implements IUserRepository {
@@ -30,6 +31,32 @@ export class UserRepository implements IUserRepository {
       return UserMapper.toDomain(dto);
     } else {
       throw new Error(result.message || 'Failed to fetch user information');
+    }
+  }
+
+  async getUserLikedRecipes(): Promise<LikedRecipe[]> {
+    const token = localStorage.getItem(APP_CONFIG.auth.tokenKey);
+
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${this.baseUrl}/users/getUserLikeRecipe`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+
+    const result: LikedRecipeListDTO = await response.json();
+
+    if (result.status === 'success') {
+      return UserMapper.toLikedRecipeListDomain(result);
+    } else {
+      throw new Error(result.message || 'Failed to fetch liked recipes');
     }
   }
 }
