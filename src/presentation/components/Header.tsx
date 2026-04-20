@@ -137,6 +137,14 @@ const Header = () => {
                             Saved Inspirations
                             <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-luxury-accent-start transition-all duration-300 group-hover:w-full"></span>
                           </Link>
+                          <Link
+                            href="/my-recipes"
+                            onClick={() => setIsProfileOpen(false)}
+                            className="block text-[10px] font-bold text-luxury-text-muted hover:text-luxury-accent-start transition-colors relative group py-1"
+                          >
+                            My Creations
+                            <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-luxury-accent-start transition-all duration-300 group-hover:w-full"></span>
+                          </Link>
                         </div>
                       </div>
                     </div>
