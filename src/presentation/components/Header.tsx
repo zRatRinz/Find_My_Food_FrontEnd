@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/presentation/contexts/AuthContext';
 import { useTheme } from '@/presentation/contexts/ThemeContext';
+import NotificationBell from './NotificationBell';
 
 const Header = () => {
   const { user, isLoggedIn, logout, getProfileImage } = useAuth();
@@ -81,8 +82,10 @@ const Header = () => {
             )}
           </button>
 
-          <Link 
-            href="/shopping" 
+          {isLoggedIn && <NotificationBell />}
+
+          <Link
+            href="/shopping"
             className="relative cursor-pointer text-luxury-text hover:text-luxury-accent-start transition-colors"
           >
             <ShoppingCart className="w-6 h-6" />
