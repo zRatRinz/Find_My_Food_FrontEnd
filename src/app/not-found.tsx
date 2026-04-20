@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function NotFound() {
   return (
-    <div className="relative min-h-full flex items-center justify-center px-6 py-12 text-luxury-text font-sans selection:bg-blue-200 overflow-hidden">
+    <div className="relative flex-grow flex items-center justify-center px-6 py-12 text-luxury-text font-sans selection:bg-blue-200 overflow-hidden">
       {/* --- Atmospheric Blobs (Synced with HomeView) --- */}
       <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-100/50 dark:bg-blue-900/20 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-100/50 dark:bg-purple-900/20 rounded-full blur-3xl pointer-events-none"></div>
@@ -27,8 +27,8 @@ export default function NotFound() {
           </h2>
 
           <div className="max-w-md mx-auto mt-6">
-            <p className="text-sm font-light text-//luxury-text-muted leading-relaxed mb-8">
-              It seems you've wandered off the curated path. 
+            <p className="text-sm font-light text-luxury-text-muted leading-relaxed mb-8">
+              It seems you've wandered off the curated path.
               The destination you're looking for may have been moved or no longer exists in our archives.
             </p>
 

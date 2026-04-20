@@ -39,7 +39,7 @@ export default function RootLayout({
       <body className="h-full transition-colors duration-300 bg-luxury-surface">
         <AuthProvider>
           <ThemeProvider>
-            <div className="h-full flex flex-col">
+            <div className="min-h-full flex flex-col">
               <Header />
               <main className="flex-grow flex flex-col">
                 {children}
