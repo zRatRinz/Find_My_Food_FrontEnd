@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/presentation/contexts/AuthContext";
-import { ThemeProvider } from "@/presentation/contexts/ThemeContext";
-import Header from "@/presentation/components/Header";
-import Footer from "@/presentation/components/Footer";
 import { APP_CONFIG } from '@/infrastructure/common/config';
+import { AuthProvider } from '@/presentation/contexts/AuthContext';
+import { ThemeProvider } from '@/presentation/contexts/ThemeContext';
+import Header from '@/presentation/components/Header';
+import Footer from '@/presentation/components/Footer';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,14 +36,16 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col transition-colors duration-300">
+      <body className="h-full transition-colors duration-300 bg-luxury-surface">
         <AuthProvider>
           <ThemeProvider>
-            <Header />
-            <main className="flex-grow">
-              {children}
-            </main>
-            <Footer />
+            <div className="h-full flex flex-col">
+              <Header />
+              <main className="flex-grow flex flex-col">
+                {children}
+              </main>
+              <Footer />
+            </div>
           </ThemeProvider>
         </AuthProvider>
       </body>
