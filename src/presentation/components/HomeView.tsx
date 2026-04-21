@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Heart, Star, Loader2, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Heart, Star, Loader2, ArrowRight, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Recipe } from '../../domain/recipe/Recipe';
 import { RecipeRepository } from '../../infrastructure/recipe/RecipeRepository';
 import Link from 'next/link';
@@ -9,14 +9,16 @@ import { useSearchParams } from 'next/navigation';
 
 const recipeApi = new RecipeRepository();
 
-const RecipeCard = ({ recipe, variant = 'standard' }: { recipe: Recipe, variant?: 'standard' | 'featured' }) => {
+const RecipeCard = ({ recipe, variant = 'standard' }: { recipe: Recipe, variant?: 'standard' | 'compact' }) => {
   return (
     <Link
       href={`/recipe/${recipe.recipeId}`}
-      className="group bg-luxury-surface rounded-xl overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-luxury-accent-start/10 border border-luxury-border shadow-sm dark:shadow-none hover:border-luxury-accent-start/30 dark:hover:border-luxury-accent-start/50 flex flex-col"
+      className={`group bg-luxury-surface rounded-xl overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-luxury-accent-start/10 border border-luxury-border shadow-sm dark:shadow-none hover:border-luxury-accent-start/30 dark:hover:border-luxury-accent-start/50 flex flex-col ${
+        variant === 'compact' ? 'w-64' : 'w-full'
+      }`}
     >
       {/* Image Section */}
-      <div className="relative aspect-[4/5] overflow-hidden bg-gray-100 dark:bg-gray-800">
+      <div className={`relative overflow-hidden bg-gray-100 dark:bg-gray-800 ${variant === 'compact' ? 'aspect-square' : 'aspect-[4/5]'}`}>
         <img
           src={recipe.imageUrl || 'https://via.placeholder.com/500?text=No+Image'}
           alt={recipe.recipeName}
@@ -35,12 +37,14 @@ const RecipeCard = ({ recipe, variant = 'standard' }: { recipe: Recipe, variant?
       </div>
 
       {/* Content Section */}
-      <div className="p-4 flex flex-col flex-grow">
-        <h3 className="text-base font-serif font-bold text-luxury-text line-clamp-2 h-12 mb-2 leading-snug group-hover:text-luxury-accent-start transition-colors">
+      <div className={`p-4 flex flex-col flex-grow ${variant === 'compact' ? 'py-3' : ''}`}>
+        <h3 className={`font-serif font-bold text-luxury-text line-clamp-2 mb-2 leading-snug group-hover:text-luxury-accent-start transition-colors ${
+          variant === 'compact' ? 'text-sm h-10' : 'text-base h-12'
+        }`}>
           {recipe.recipeName}
         </h3>
 
-        <div className="flex flex-wrap items-start gap-1.5 mb-4 h-10 overflow-hidden">
+        <div className={`flex flex-wrap items-start gap-1.5 mb-4 overflow-hidden h-10`}>
           {recipe.tags.slice(0, 5).map((tag, idx) => (
             <span key={idx} className="text-[9px] font-bold uppercase tracking-wider text-luxury-accent-start dark:text-luxury-accent-end bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded border border-blue-100 dark:border-blue-900/30 leading-none">
               {tag}
@@ -68,23 +72,36 @@ const RecipeCard = ({ recipe, variant = 'standard' }: { recipe: Recipe, variant?
 const HomeView = () => {
   const searchParams = useSearchParams();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [recommended, setRecommended] = useState<Recipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const { current } = scrollRef;
+      const scrollAmount = 280; // Card width (256) + gap (24)
+      current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth',
+      });
+    }
+  };
 
   useEffect(() => {
-    const fetchRecipes = async () => {
+    const fetchData = async () => {
       const query = searchParams.get('search');
       try {
         setIsLoading(true);
         setError(null);
 
-        if (query) {
-          const data = await recipeApi.getRecipesByName(query);
-          setRecipes(data);
-        } else {
-          const data = await recipeApi.getAllRecipes();
-          setRecipes(data);
-        }
+        const [recipesData, recommendedData] = await Promise.all([
+          query ? recipeApi.getRecipesByName(query) : recipeApi.getAllRecipes(),
+          recipeApi.getRecommendedRecipes()
+        ]);
+
+        setRecipes(recipesData);
+        setRecommended(recommendedData);
       } catch (err: any) {
         setError(err.message || 'Failed to load recipes');
       } finally {
@@ -92,7 +109,7 @@ const HomeView = () => {
       }
     };
 
-    fetchRecipes();
+    fetchData();
   }, [searchParams]);
 
   return (
@@ -142,6 +159,59 @@ const HomeView = () => {
           </div>
         </div>
 
+        {/* --- RECOMMENDED SECTION (Horizontal Scroll with Arrows) --- */}
+        {recommended.length > 0 && !isLoading && (
+          <section className="mb-20 relative group/carousel">
+            <div className="flex items-center justify-between mb-8">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-luxury-accent-start font-bold text-xs uppercase tracking-widest">
+                  <Sparkles className="w-3 h-3" />
+                  <span>Personalized</span>
+                </div>
+                <h2 className="text-3xl font-serif font-bold text-luxury-text">Chef's Selection</h2>
+              </div>
+              <div className="hidden md:block w-24 h-[1px] bg-luxury-border"></div>
+            </div>
+            
+            <div className="relative">
+              {/* Navigation Arrows */}
+              <button 
+                onClick={() => scroll('left')}
+                className="absolute -left-4 top-1/2 -translate-y-1/2 z-20 p-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md rounded-full shadow-lg text-luxury-text hover:text-luxury-accent-start transition-all duration-300 hover:scale-110 opacity-0 group-hover/carousel:opacity-100 border border-luxury-border"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={() => scroll('right')}
+                className="absolute -right-4 top-1/2 -translate-y-1/2 z-20 p-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md rounded-full shadow-lg text-luxury-text hover:text-luxury-accent-start transition-all duration-300 hover:scale-110 opacity-0 group-hover/carousel:opacity-100 border border-luxury-border"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+
+              <div 
+                ref={scrollRef}
+                className="flex overflow-x-auto gap-6 pb-8 snap-x snap-mandatory scrollbar-hide"
+                style={{ 
+                  msOverflowStyle: 'none', 
+                  scrollbarWidth: 'none', 
+                  WebkitOverflowScrolling: 'touch' 
+                }}
+              >
+                {recommended.map((recipe) => (
+                  <div key={recipe.recipeId} className="snap-start shrink-0">
+                    <RecipeCard recipe={recipe} variant="compact" />
+                  </div>
+                ))}
+              </div>
+              <style jsx>{`
+                div::-webkit-scrollbar {
+                  display: none;
+                }
+              `}</style>
+            </div>
+          </section>
+        )}
+
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-32">
             <Loader2 className="w-10 h-10 text-luxury-accent-start animate-spin mb-4" />
@@ -160,16 +230,22 @@ const HomeView = () => {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-            {recipes.map((recipe) => (
-              <RecipeCard key={recipe.recipeId} recipe={recipe} />
-            ))}
-            {recipes.length === 0 && (
-              <div className="col-span-full text-center py-32 text-gray-400 font-light italic">
-                No recipes found in our archives.
-              </div>
-            )}
-          </div>
+          <>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-3xl font-serif font-bold text-luxury-text">All Recipes</h2>
+              <div className="hidden md:block w-24 h-[1px] bg-luxury-border"></div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+              {recipes.map((recipe) => (
+                <RecipeCard key={recipe.recipeId} recipe={recipe} />
+              ))}
+              {recipes.length === 0 && (
+                <div className="col-span-full text-center py-32 text-gray-400 font-light italic">
+                  No recipes found in our archives.
+                </div>
+              )}
+            </div>
+          </>
         )}
       </main>
     </div>

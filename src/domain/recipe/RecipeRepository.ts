@@ -5,4 +5,5 @@ export interface IRecipeRepository {
   getRecipesByName(name: string): Promise<Recipe[]>;
   getRecipeById(id: number): Promise<RecipeDetail>;
   getMyCreatedRecipes(): Promise<Recipe[]>;
+  getRecommendedRecipes(): Promise<Recipe[]>;
 }

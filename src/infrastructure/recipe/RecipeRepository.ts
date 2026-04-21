@@ -126,4 +126,41 @@ export class RecipeRepository implements IRecipeRepository {
       throw error;
     }
   }
+
+  async getRecommendedRecipes(): Promise<Recipe[]> {
+    try {
+      const response = await fetch(`${this.baseUrl}/recipe/getRecommendRecipeFromStock`, {
+        method: 'GET',
+        headers: await this.getAuthHeaders(),
+      });
+
+      if (response.status === 401) {
+        // User is not authenticated, return empty list instead of throwing error
+        return [];
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = (await response.json()) as StandardResponse<RecipeDTO[]>;
+
+      if (result.status !== 'success') {
+        throw new Error(result.message || 'An unknown error occurred while fetching recommended recipes');
+      }
+
+      if (!result.data || !Array.isArray(result.data)) {
+        throw new Error('Invalid data format received from API');
+      }
+
+      return result.data.map((dto) => RecipeMapper.toDomain(dto));
+    } catch (error) {
+      // If it's a 401 or auth error, return empty list
+      if (error instanceof Error && error.message.includes('401')) {
+        return [];
+      }
+      console.error('RecipeRepository.getRecommendedRecipes error:', error);
+      throw error;
+    }
+  }
 }
