@@ -73,13 +73,15 @@ const HomeView = () => {
   const searchParams = useSearchParams();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [recommended, setRecommended] = useState<Recipe[]>([]);
+  const [recommendedForYou, setRecommendedForYou] = useState<Recipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollRefStock = useRef<HTMLDivElement>(null);
+  const scrollRefForYou = useRef<HTMLDivElement>(null);
 
-  const scroll = (direction: 'left' | 'right') => {
-    if (scrollRef.current) {
-      const { current } = scrollRef;
+  const scroll = (ref: React.RefObject<HTMLDivElement>, direction: 'left' | 'right') => {
+    if (ref.current) {
+      const { current } = ref;
       const scrollAmount = 280; // Card width (256) + gap (24)
       current.scrollBy({
         left: direction === 'left' ? -scrollAmount : scrollAmount,
@@ -95,13 +97,15 @@ const HomeView = () => {
         setIsLoading(true);
         setError(null);
 
-        const [recipesData, recommendedData] = await Promise.all([
+        const [recipesData, recommendedData, recommendedForYouData] = await Promise.all([
           query ? recipeApi.getRecipesByName(query) : recipeApi.getAllRecipes(),
-          recipeApi.getRecommendedRecipes()
+          recipeApi.getRecommendedRecipes(),
+          recipeApi.getRecommendedRecipesForYou()
         ]);
 
         setRecipes(recipesData);
         setRecommended(recommendedData);
+        setRecommendedForYou(recommendedForYouData);
       } catch (err: any) {
         setError(err.message || 'Failed to load recipes');
       } finally {
@@ -159,9 +163,9 @@ const HomeView = () => {
           </div>
         </div>
 
-        {/* --- RECOMMENDED SECTION (Horizontal Scroll with Arrows) --- */}
+        {/* --- RECOMMENDED SECTION (From Stock) --- */}
         {recommended.length > 0 && !isLoading && (
-          <section className="mb-20 relative group/carousel">
+          <section className="mb-6 relative group/carousel">
             <div className="flex items-center justify-between mb-8">
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-luxury-accent-start font-bold text-xs uppercase tracking-widest">
@@ -172,29 +176,29 @@ const HomeView = () => {
               </div>
               <div className="hidden md:block w-24 h-[1px] bg-luxury-border"></div>
             </div>
-            
+
             <div className="relative">
               {/* Navigation Arrows */}
-              <button 
-                onClick={() => scroll('left')}
+              <button
+                onClick={() => scroll(scrollRefStock, 'left')}
                 className="absolute -left-4 top-1/2 -translate-y-1/2 z-20 p-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md rounded-full shadow-lg text-luxury-text hover:text-luxury-accent-start transition-all duration-300 hover:scale-110 opacity-0 group-hover/carousel:opacity-100 border border-luxury-border"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <button 
-                onClick={() => scroll('right')}
+              <button
+                onClick={() => scroll(scrollRefStock, 'right')}
                 className="absolute -right-4 top-1/2 -translate-y-1/2 z-20 p-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md rounded-full shadow-lg text-luxury-text hover:text-luxury-accent-start transition-all duration-300 hover:scale-110 opacity-0 group-hover/carousel:opacity-100 border border-luxury-border"
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
 
-              <div 
-                ref={scrollRef}
-                className="flex overflow-x-auto gap-6 pb-8 snap-x snap-mandatory scrollbar-hide"
-                style={{ 
-                  msOverflowStyle: 'none', 
-                  scrollbarWidth: 'none', 
-                  WebkitOverflowScrolling: 'touch' 
+              <div
+                ref={scrollRefStock}
+                className="flex overflow-x-auto gap-6 pb-4 snap-x snap-mandatory scrollbar-hide"
+                style={{
+                  msOverflowStyle: 'none',
+                  scrollbarWidth: 'none',
+                  WebkitOverflowScrolling: 'touch'
                 }}
               >
                 {recommended.map((recipe) => (
@@ -212,6 +216,58 @@ const HomeView = () => {
           </section>
         )}
 
+        {/* --- RECOMMENDED SECTION (For You) --- */}
+        {recommendedForYou.length > 0 && !isLoading && (
+          <section className="mb-6 relative group/carousel">
+            <div className="flex items-center justify-between mb-8">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-luxury-accent-start font-bold text-xs uppercase tracking-widest">
+                  <Sparkles className="w-3 h-3" />
+                  <span>Curated for You</span>
+                </div>
+                <h2 className="text-3xl font-serif font-bold text-luxury-text">Your Taste Palette</h2>
+              </div>
+              <div className="hidden md:block w-24 h-[1px] bg-luxury-border"></div>
+            </div>
+
+            <div className="relative">
+              {/* Navigation Arrows */}
+              <button
+                onClick={() => scroll(scrollRefForYou, 'left')}
+                className="absolute -left-4 top-1/2 -translate-y-1/2 z-20 p-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md rounded-full shadow-lg text-luxury-text hover:text-luxury-accent-start transition-all duration-300 hover:scale-110 opacity-0 group-hover/carousel:opacity-100 border border-luxury-border"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => scroll(scrollRefForYou, 'right')}
+                className="absolute -right-4 top-1/2 -translate-y-1/2 z-20 p-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md rounded-full shadow-lg text-luxury-text hover:text-luxury-accent-start transition-all duration-300 hover:scale-110 opacity-0 group-hover/carousel:opacity-100 border border-luxury-border"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+
+              <div
+                ref={scrollRefForYou}
+                className="flex overflow-x-auto gap-6 pb-4 snap-x snap-mandatory scrollbar-hide"
+                style={{
+                  msOverflowStyle: 'none',
+                  scrollbarWidth: 'none',
+                  WebkitOverflowScrolling: 'touch'
+                }}
+              >
+                {recommendedForYou.map((recipe) => (
+                  <div key={recipe.recipeId} className="snap-start shrink-0">
+                    <RecipeCard recipe={recipe} variant="compact" />
+                  </div>
+                ))}
+              </div>
+              <style jsx>{`
+                div::-webkit-scrollbar {
+                  display: none;
+                }
+              `}</style>
+            </div>
+          </section>
+        )}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-32">
             <Loader2 className="w-10 h-10 text-luxury-accent-start animate-spin mb-4" />

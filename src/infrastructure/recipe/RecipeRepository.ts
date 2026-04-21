@@ -163,4 +163,39 @@ export class RecipeRepository implements IRecipeRepository {
       throw error;
     }
   }
+
+  async getRecommendedRecipesForYou(): Promise<Recipe[]> {
+    try {
+      const response = await fetch(`${this.baseUrl}/recipe/getRecommendRecipeForYou`, {
+        method: 'GET',
+        headers: await this.getAuthHeaders(),
+      });
+
+      if (response.status === 401) {
+        return [];
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = (await response.json()) as StandardResponse<RecipeDTO[]>;
+
+      if (result.status !== 'success') {
+        throw new Error(result.message || 'An unknown error occurred while fetching recommended recipes for you');
+      }
+
+      if (!result.data || !Array.isArray(result.data)) {
+        throw new Error('Invalid data format received from API');
+      }
+
+      return result.data.map((dto) => RecipeMapper.toDomain(dto));
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('401')) {
+        return [];
+      }
+      console.error('RecipeRepository.getRecommendedRecipesForYou error:', error);
+      throw error;
+    }
+  }
 }
