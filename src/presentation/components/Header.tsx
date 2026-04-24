@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, ShoppingCart, Menu, LogOut, Sun, Moon } from 'lucide-react';
+import { Search, ShoppingCart, Menu, LogOut, Sun, Moon, Camera } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/presentation/contexts/AuthContext';
@@ -51,21 +51,30 @@ const Header = () => {
         </div>
 
         {/* Refined Search Bar */}
-        <div className="flex-grow relative max-w-xl hidden md:block">
-          <input
-            type="text"
-            placeholder="Search for culinary inspiration..."
-            className="w-full py-2.5 px-5 pr-12 bg-gray-100 dark:bg-gray-800 border-transparent rounded-full text-sm text-luxury-text focus:bg-white dark:focus:bg-gray-700 focus:ring-2 focus:ring-luxury-accent-start/20 focus:border-luxury-accent-start transition-all outline-none placeholder-gray-400 dark:placeholder-gray-500"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-          />
-          <button
-            onClick={handleSearch}
-            className="absolute right-1 top-1 bottom-1 px-4 bg-luxury-gradient hover:opacity-90 text-white rounded-full transition-all duration-300 shadow-sm"
+        <div className="flex-grow relative max-w-xl hidden md:flex items-center gap-2">
+          <div className="relative flex-grow">
+            <input
+              type="text"
+              placeholder="Search for culinary inspiration..."
+              className="w-full py-2.5 px-5 pr-12 bg-gray-100 dark:bg-gray-800 border-transparent rounded-full text-sm text-luxury-text focus:bg-white dark:focus:bg-gray-700 focus:ring-2 focus:ring-luxury-accent-start/20 focus:border-luxury-accent-start transition-all outline-none placeholder-gray-400 dark:placeholder-gray-500"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            />
+            <button
+              onClick={handleSearch}
+              className="absolute right-1 top-1 bottom-1 px-4 bg-luxury-gradient hover:opacity-90 text-white rounded-full transition-all duration-300 shadow-sm"
+            >
+              <Search className="w-4 h-4" />
+            </button>
+          </div>
+          <Link
+            href="/scan"
+            className="p-2.5 bg-white dark:bg-gray-800 border border-luxury-border rounded-full text-luxury-text hover:text-luxury-accent-start hover:border-luxury-accent-start transition-all duration-300 shadow-sm hover:scale-110 group"
+            title="Scan Ingredients"
           >
-            <Search className="w-4 h-4" />
-          </button>
+            <Camera className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+          </Link>
         </div>
 
         <div className="flex items-center gap-6">
