@@ -59,4 +59,24 @@ export class UserRepository implements IUserRepository {
       throw new Error(result.message || 'Failed to fetch liked recipes');
     }
   }
+
+  async createUser(userData: CreateUserDTO): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/users/createUser`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || errorData.message || `API Error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    if (result.status !== 'success') {
+      throw new Error(result.message || 'Failed to create account');
+    }
+  }
 }

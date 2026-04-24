@@ -206,7 +206,7 @@ export default function LoginPage() {
             <div className="text-center space-y-6">
               <p className="text-sm text-luxury-text-muted font-light">
                 New to the community?{' '}
-                <Link href="#" className="text-luxury-text font-bold hover:text-luxury-accent-start transition-colors underline underline-offset-4">
+                <Link href="/signup" className="text-luxury-text font-bold hover:text-luxury-accent-start transition-colors underline underline-offset-4">
                   Create an account
                 </Link>
               </p>

@@ -7,6 +7,14 @@ export interface UserDTO {
   image_url: string | null;
 }
 
+export interface CreateUserDTO {
+  username: string;
+  email: string;
+  password: string;
+  gender?: string | null;
+  birth_date?: string | null;
+}
+
 export interface LikedRecipeDTO {
   recipe_id: number;
   recipe_name: string;

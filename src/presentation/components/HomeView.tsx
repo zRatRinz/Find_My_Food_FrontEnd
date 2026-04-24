@@ -79,7 +79,7 @@ const HomeView = () => {
   const scrollRefStock = useRef<HTMLDivElement>(null);
   const scrollRefForYou = useRef<HTMLDivElement>(null);
 
-  const scroll = (ref: React.RefObject<HTMLDivElement>, direction: 'left' | 'right') => {
+  const scroll = (ref: React.RefObject<HTMLDivElement | null>, direction: 'left' | 'right') => {
     if (ref.current) {
       const { current } = ref;
       const scrollAmount = 280; // Card width (256) + gap (24)
