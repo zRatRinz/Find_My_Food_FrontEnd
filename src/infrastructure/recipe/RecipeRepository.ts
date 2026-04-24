@@ -198,4 +198,36 @@ export class RecipeRepository implements IRecipeRepository {
       throw error;
     }
   }
+
+  async getRecipesByIngredientsAndTag(ingredients: string[], tagIds: number[]): Promise<Recipe[]> {
+    try {
+      const params = new URLSearchParams();
+      ingredients.forEach(ing => params.append('ingredient_list', ing));
+      tagIds.forEach(id => params.append('tag_list', id.toString()));
+
+      const response = await fetch(`${this.baseUrl}/recipe/getRecipeByIngredientAndTag?${params.toString()}`, {
+        method: 'GET',
+        headers: await this.getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = (await response.json()) as StandardResponse<RecipeDTO[]>;
+
+      if (result.status !== 'success') {
+        throw new Error(result.message || 'An unknown error occurred while fetching recipes by ingredients and tag');
+      }
+
+      if (!result.data || !Array.isArray(result.data)) {
+        throw new Error('Invalid data format received from API');
+      }
+
+      return result.data.map((dto) => RecipeMapper.toDomain(dto));
+    } catch (error) {
+      console.error('RecipeRepository.getRecipesByIngredientsAndTag error:', error);
+      throw error;
+    }
+  }
 }

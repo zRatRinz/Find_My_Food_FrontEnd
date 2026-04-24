@@ -8,9 +8,11 @@ import { useAuth } from '@/presentation/contexts/AuthContext';
 import { Recipe } from '@/domain/recipe/Recipe';
 import { RecipeCard } from '@/presentation/components/RecipeCard';
 import { RecipeAIRepository } from '@/infrastructure/recipeAI/RecipeAIRepository';
-import { AnalyzeFoodResponseDTO } from '@/domain/recipeAI/AnalyzeFoodDTO';
+import { RecipeRepository } from '@/infrastructure/recipe/RecipeRepository';
+import { RecipeAIResult, IngredientScanResult } from '@/domain/recipeAI/RecipeAI';
 
 const recipeAIRepo = new RecipeAIRepository();
+const recipeRepo = new RecipeRepository();
 
 type ScanState = 'IDLE' | 'SCANNING' | 'RESULTS' | 'NO_FOOD' | 'ERROR';
 type ScanMode = 'FOOD' | 'INGREDIENTS';
@@ -26,8 +28,14 @@ export default function ScanPage() {
   const [image, setImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [forceSearch, setForceSearch] = useState(false);
-  const [scanResults, setScanResults] = useState<AnalyzeFoodResponseDTO | null>(null);
+  const [scanResults, setScanResults] = useState<RecipeAIResult | IngredientScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+  const [selectedTagNames, setSelectedTagNames] = useState<string[]>([]);
+  const [isFiltering, setIsFiltering] = useState(false);
+  const [filteredRecipes, setFilteredRecipes] = useState<Recipe[] | null>(null);
+  const [currentIngredients, setCurrentIngredients] = useState<string[]>([]);
+  const [newIngredient, setNewIngredient] = useState('');
 
   // Handle mounting and restoration
   useEffect(() => {
@@ -94,18 +102,26 @@ export default function ScanPage() {
     setState('SCANNING');
     setError(null);
     try {
-      const results = await recipeAIRepo.analyzeFoodImage(file, forceSearch);
-      setScanResults(results);
-
-      if (results.is_food) {
-        setState('RESULTS');
+      let results;
+      if (mode === 'FOOD') {
+        results = await recipeAIRepo.analyzeFoodImage(file, forceSearch);
+        if (!(results as RecipeAIResult).isFood) {
+          setState('NO_FOOD');
+          return;
+        }
       } else {
-        setState('NO_FOOD');
+        results = await recipeAIRepo.analyzeIngredientImage(file);
+        if (results && 'ingredients' in results) {
+          setCurrentIngredients(results.ingredients);
+        }
       }
+
+      setScanResults(results);
+      setState('RESULTS');
     } catch (error: any) {
       console.error('Scanning error:', error);
       setError(error.message || 'An unexpected error occurred.');
-      
+
       if (error.isNoFood) {
         setState('NO_FOOD');
       } else {
@@ -119,7 +135,73 @@ export default function ScanPage() {
     setMode(null);
     setForceSearch(false);
     setScanResults(null);
+    setSelectedTagIds([]);
+    setSelectedTagNames([]);
+    setFilteredRecipes(null);
+    setCurrentIngredients([]);
+    setNewIngredient('');
     sessionStorage.removeItem('scan_session');
+  };
+
+  const refreshRecipes = async (ingredients: string[], tagIds: number[] | null) => {
+    if (!tagIds || tagIds.length === 0) {
+      setFilteredRecipes(null);
+      return;
+    }
+
+    try {
+      setIsFiltering(true);
+      const recipes = await recipeRepo.getRecipesByIngredientsAndTag(ingredients, tagIds);
+      setFilteredRecipes(recipes);
+    } catch (err) {
+      console.error('Error refreshing recipes:', err);
+      setError('Failed to update recipes based on your ingredients.');
+    } finally {
+      setIsFiltering(false);
+    }
+  };
+
+  const handleTagClick = async (tagId: number, tagName: string) => {
+    let updatedIds: number[];
+    let updatedNames: string[];
+
+    if (selectedTagIds.includes(tagId)) {
+      updatedIds = selectedTagIds.filter(id => id !== tagId);
+      updatedNames = selectedTagNames.filter(name => name !== tagName);
+    } else {
+      updatedIds = [...selectedTagIds, tagId];
+      updatedNames = [...selectedTagNames, tagName];
+    }
+
+    setSelectedTagIds(updatedIds);
+    setSelectedTagNames(updatedNames);
+
+    try {
+      await refreshRecipes(currentIngredients, updatedIds);
+    } catch (err) {
+      console.error('Error filtering recipes by tag:', err);
+      setError('Failed to fetch recipes for the selected theme.');
+    }
+  };
+
+  const addIngredient = () => {
+    const trimmed = newIngredient.trim();
+    if (trimmed && !currentIngredients.includes(trimmed)) {
+      const updated = [...currentIngredients, trimmed];
+      setCurrentIngredients(updated);
+      setNewIngredient('');
+      if (selectedTagIds.length > 0) {
+        refreshRecipes(updated, selectedTagIds);
+      }
+    }
+  };
+
+  const removeIngredient = (ingToRemove: string) => {
+    const updated = currentIngredients.filter(ing => ing !== ingToRemove);
+    setCurrentIngredients(updated);
+    if (selectedTagIds.length > 0) {
+      refreshRecipes(updated, selectedTagIds);
+    }
   };
 
   return (
@@ -321,18 +403,80 @@ export default function ScanPage() {
                         <Sparkles className="w-5 h-5 text-luxury-accent-start" />
                         <h3 className="text-xl font-serif font-bold text-luxury-text">Detected Ingredients</h3>
                       </div>
-                      <div className="flex flex-wrap gap-3">
-                        {scanResults?.predicted_name?.map((ing, idx) => (
+                      <div className="flex flex-wrap gap-3 mb-6">
+                        {currentIngredients.map((ing, idx) => (
                           <div
                             key={idx}
-                            className="flex items-center gap-2 px-4 py-2 bg-luxury-surface/80 dark:bg-gray-800/80 border border-luxury-border rounded-full text-xs font-bold text-luxury-text dark:text-white animate-in zoom-in duration-300"
+                            className="group flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-white/10 backdrop-blur-sm border border-luxury-border rounded-full text-xs font-bold text-luxury-text dark:text-white animate-in zoom-in duration-300 shadow-sm hover:border-luxury-accent-start transition-all"
                             style={{ animationDelay: `${idx * 100}ms` }}
                           >
                             <CheckCircle2 className="w-3 h-3 text-luxury-accent-start" />
                             {ing}
+                            <button
+                              onClick={() => removeIngredient(ing)}
+                              className="ml-1 p-0.5 rounded-full bg-luxury-text/10 text-luxury-text hover:bg-red-500 hover:text-white transition-colors opacity-0 group-hover:opacity-100"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
                           </div>
                         ))}
                       </div>
+
+                      <div className="relative mb-8 group">
+                        <input
+                          type="text"
+                          value={newIngredient}
+                          onChange={(e) => setNewIngredient(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && addIngredient()}
+                          placeholder="Add an ingredient..."
+                          className="w-full px-5 py-3 bg-transparent border-b border-luxury-border focus:border-luxury-accent-start outline-none text-sm font-light text-luxury-text dark:text-white transition-all placeholder:text-luxury-text-muted/50"
+                        />
+                        <button
+                          onClick={addIngredient}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-luxury-accent-start text-white rounded-full text-[10px] font-bold uppercase tracking-widest hover:scale-105 transition-transform"
+                        >
+                          Add
+                        </button>
+                      </div>
+
+                      {(scanResults as IngredientScanResult)?.tags && (scanResults as IngredientScanResult).tags.length > 0 && (
+                        <div className="mb-8 animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '400ms' }}>
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-luxury-text-muted">Culinary Profiles</span>
+                              <div className="h-px w-8 bg-luxury-border/50" />
+                            </div>
+                            {selectedTagIds.length > 0 && (
+                              <button 
+                                onClick={() => {
+                                  setSelectedTagIds([]);
+                                  setSelectedTagNames([]);
+                                  setFilteredRecipes(null);
+                                }}
+                                className="text-[10px] font-bold uppercase tracking-widest text-luxury-text-muted hover:text-luxury-accent-start transition-colors flex items-center gap-1"
+                              >
+                                <X className="w-2 h-2" /> Clear All
+                              </button>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {(scanResults as IngredientScanResult).tags.map((tag, idx) => (
+                              <button
+                                key={tag.id}
+                                onClick={() => handleTagClick(tag.id, tag.name)}
+                                className={`text-[11px] font-serif italic px-3 py-1 rounded-full border transition-all duration-300 animate-in zoom-in ${
+                                  selectedTagIds.includes(tag.id)
+                                    ? 'bg-luxury-accent-start text-white border-luxury-accent-start shadow-md scale-105'
+                                    : 'text-luxury-accent-start bg-luxury-accent-start/10 border-luxury-accent-start/20 hover:bg-luxury-accent-start/20'
+                                }`}
+                                style={{ animationDelay: `${500 + (idx * 100)}ms` }}
+                              >
+                                {tag.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -359,8 +503,8 @@ export default function ScanPage() {
                         <h3 className="text-xl font-serif font-bold text-luxury-text">Dish Identified</h3>
                       </div>
                       <div className="flex flex-wrap justify-center gap-4 px-4">
-                        {scanResults?.predicted_name?.map((name, idx) => (
-                          <div 
+                        {(scanResults as RecipeAIResult)?.predictedNames?.map((name, idx) => (
+                          <div
                             key={idx}
                             className="group relative animate-in fade-in zoom-in duration-500 fill-mode-both"
                             style={{ animationDelay: `${idx * 100}ms` }}
@@ -373,7 +517,7 @@ export default function ScanPage() {
                             <div className="absolute -inset-1 bg-luxury-accent-start/20 rounded-full blur opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                           </div>
                         ))}
-                        {!scanResults?.predicted_name?.length && (
+                        {! (scanResults as RecipeAIResult)?.predictedNames?.length && (
                           <p className="text-4xl font-serif italic text-luxury-accent-start text-center">Unknown Dish</p>
                         )}
                       </div>
@@ -385,9 +529,33 @@ export default function ScanPage() {
 
               <div className="space-y-8">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-3xl font-serif font-bold text-luxury-text">
-                    {mode === 'FOOD' ? 'The Secret Recipe' : 'Curated Matches'}
-                  </h3>
+                  <div className="flex flex-col gap-1">
+                    <h3 className="text-3xl font-serif font-bold text-luxury-text">
+                      {mode === 'FOOD' ? 'The Secret Recipe' : 'Curated Matches'}
+                    </h3>
+                    {selectedTagIds.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-500">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-luxury-text-muted">Filtering by:</span>
+                        <div className="flex flex-wrap gap-1">
+                          {selectedTagNames.map((name, idx) => (
+                            <span key={idx} className="text-xs font-serif italic text-luxury-accent-start bg-luxury-accent-start/10 px-2 py-0.5 rounded-full border border-luxury-accent-start/20">
+                              {name}
+                            </span>
+                          ))}
+                        </div>
+                        <button 
+                          onClick={() => {
+                            setSelectedTagIds([]);
+                            setSelectedTagNames([]);
+                            setFilteredRecipes(null);
+                          }}
+                          className="text-[10px] font-bold uppercase tracking-widest text-luxury-text-muted hover:text-luxury-accent-start transition-colors flex items-center gap-1 ml-2"
+                        >
+                          <X className="w-2 h-2" /> Clear All
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   <button
                     onClick={resetScan}
                     className="text-xs font-bold uppercase tracking-widest text-luxury-text-muted hover:text-luxury-accent-start transition-colors flex items-center gap-2"
@@ -397,28 +565,41 @@ export default function ScanPage() {
                   </button>
                 </div>
                 <div className="flex flex-col gap-6">
-                  {scanResults?.recipes && scanResults.recipes.length > 0 ? (
-                    scanResults.recipes.map((recipe, index) => (
-                      <div 
-                        key={recipe.recipeId} 
-                        className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both"
-                        style={{ animationDelay: `${index * 150}ms` }}
-                      >
-                        <RecipeCard recipe={recipe} variant="horizontal" />
-                      </div>
-                    ))
-                  ) : (
-                    <div className="flex flex-col items-center justify-center text-center py-20 space-y-6">
-                      <div className="w-20 h-20 bg-luxury-surface dark:bg-gray-800 rounded-full flex items-center justify-center text-luxury-text-muted opacity-50">
-                        <UtensilsCrossed className="w-10 h-10" />
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-xl font-serif italic text-luxury-text">No Perfect Match Found</p>
-                        <p className="text-sm text-luxury-text-muted font-light max-w-xs mx-auto">
-                          Our curators are still searching for the ideal recipe. Try a different angle or lighting!
-                        </p>
-                      </div>
+                  {isFiltering ? (
+                    <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                      <Loader2 className="w-8 h-8 text-luxury-accent-start animate-spin" />
+                      <p className="text-sm font-serif italic text-luxury-text-muted">Curating recipes for your theme...</p>
                     </div>
+                  ) : (
+                    <>
+                      {(filteredRecipes || scanResults?.recipes) && (filteredRecipes || scanResults?.recipes).length > 0 ? (
+                        (filteredRecipes || scanResults?.recipes).map((recipe, index) => (
+                          <div
+                            key={recipe.recipeId}
+                            className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both"
+                            style={{ animationDelay: `${index * 150}ms` }}
+                          >
+                            <RecipeCard recipe={recipe} variant="horizontal" />
+                          </div>
+                        ))
+                      ) : (
+                        <div className="flex flex-col items-center justify-center text-center py-20 space-y-6">
+                          <div className="w-20 h-20 bg-luxury-surface dark:bg-gray-800 rounded-full flex items-center justify-center text-luxury-text-muted opacity-50">
+                            {mode === 'INGREDIENTS' ? <Leaf className="w-10 h-10" /> : <UtensilsCrossed className="w-10 h-10" />}
+                          </div>
+                          <div className="space-y-2">
+                            <p className="text-xl font-serif italic text-luxury-text">
+                              {mode === 'INGREDIENTS' ? 'No Gourmet Match Found' : 'No Perfect Match Found'}
+                            </p>
+                            <p className="text-sm text-luxury-text-muted font-light max-w-xs mx-auto">
+                              {mode === 'INGREDIENTS' 
+                                ? 'We couldn\'t find a recipe that perfectly matches these ingredients. Try adding more or changing the photo!' 
+                                : 'Our curators are still searching for the ideal recipe. Try a different angle or lighting!'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
