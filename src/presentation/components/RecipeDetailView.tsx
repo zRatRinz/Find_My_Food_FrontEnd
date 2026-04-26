@@ -30,6 +30,41 @@ const RecipeDetailView = ({ recipeId }: { recipeId: number }) => {
     fetchDetail();
   }, [recipeId]);
 
+  const handleLikeToggle = async () => {
+    if (!recipe) return;
+
+    const previousLikeCount = recipe.likeCount;
+    const previousIsLiked = recipe.isLiked;
+
+    // Optimistic Update
+    setRecipe({
+      ...recipe,
+      isLiked: !previousIsLiked,
+      likeCount: previousIsLiked ? previousLikeCount - 1 : previousLikeCount + 1,
+    });
+
+    try {
+      const result = previousIsLiked 
+        ? await recipeApi.unlikeRecipe(recipeId) 
+        : await recipeApi.likeRecipe(recipeId);
+
+      // Sync with server result
+      setRecipe({
+        ...recipe,
+        isLiked: result.isLiked,
+        likeCount: result.likeCount,
+      });
+    } catch (err: any) {
+      // Rollback on error
+      setRecipe({
+        ...recipe,
+        isLiked: previousIsLiked,
+        likeCount: previousLikeCount,
+      });
+      alert(err.message || 'Something went wrong while updating like status');
+    }
+  };
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -85,7 +120,10 @@ const RecipeDetailView = ({ recipeId }: { recipeId: number }) => {
                 className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
               />
               <div className="absolute top-6 right-6">
-                <button className={`p-4 rounded-full shadow-xl transition-all transform hover:scale-110 ${recipe.isLiked ? 'bg-red-500 text-white' : 'bg-white text-gray-400 hover:text-red-500'}`}>
+                <button 
+                  onClick={handleLikeToggle}
+                  className={`p-4 rounded-full shadow-xl transition-all transform hover:scale-110 ${recipe.isLiked ? 'bg-red-500 text-white' : 'bg-white text-gray-400 hover:text-red-500'}`}
+                >
                   <Heart className={`w-6 h-6 ${recipe.isLiked ? 'fill-current' : ''}`} />
                 </button>
               </div>

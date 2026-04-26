@@ -45,7 +45,7 @@ export class RecipeRepository implements IRecipeRepository {
 
   async getRecipesByName(name: string): Promise<Recipe[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/recipegetRecipeByName/${encodeURIComponent(name)}`, {
+      const response = await fetch(`${this.baseUrl}/recipe/getRecipeByName/${encodeURIComponent(name)}`, {
         method: 'GET',
         headers: await this.getAuthHeaders(),
       });
@@ -95,6 +95,60 @@ export class RecipeRepository implements IRecipeRepository {
       return RecipeMapper.toRecipeDetail(result.data);
     } catch (error) {
       console.error('RecipeRepository.getRecipeById error:', error);
+      throw error;
+    }
+  }
+
+  async likeRecipe(id: number): Promise<{ likeCount: number; isLiked: boolean }> {
+    try {
+      const response = await fetch(`${this.baseUrl}/recipe/likeRecipe/${id}`, {
+        method: 'POST',
+        headers: await this.getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = (await response.json()) as StandardResponse<{ like_count: number; is_liked: boolean }>;
+
+      if (result.status !== 'success' || !result.data) {
+        throw new Error(result.message || 'Failed to like recipe');
+      }
+
+      return {
+        likeCount: result.data.like_count,
+        isLiked: result.data.is_liked,
+      };
+    } catch (error) {
+      console.error('RecipeRepository.likeRecipe error:', error);
+      throw error;
+    }
+  }
+
+  async unlikeRecipe(id: number): Promise<{ likeCount: number; isLiked: boolean }> {
+    try {
+      const response = await fetch(`${this.baseUrl}/recipe/unlikeRecipe/${id}`, {
+        method: 'DELETE',
+        headers: await this.getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = (await response.json()) as StandardResponse<{ like_count: number; is_liked: boolean }>;
+
+      if (result.status !== 'success' || !result.data) {
+        throw new Error(result.message || 'Failed to unlike recipe');
+      }
+
+      return {
+        likeCount: result.data.like_count,
+        isLiked: result.data.is_liked,
+      };
+    } catch (error) {
+      console.error('RecipeRepository.unlikeRecipe error:', error);
       throw error;
     }
   }
