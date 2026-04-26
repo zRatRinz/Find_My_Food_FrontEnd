@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Heart, Star, Loader2, ArrowRight, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, Star, Loader2, ArrowRight, Sparkles, ChevronLeft, ChevronRight, Filter, X, Zap } from 'lucide-react';
 import { Recipe } from '../../domain/recipe/Recipe';
 import { RecipeRepository } from '../../infrastructure/recipe/RecipeRepository';
 import { RecipeCard } from './RecipeCard';
+import { RecipeFilterBar } from './RecipeFilterBar';
+import { FilterDrawer } from './FilterDrawer';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
@@ -13,12 +15,28 @@ const recipeApi = new RecipeRepository();
 const HomeView = () => {
   const searchParams = useSearchParams();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [genZRecipes, setGenZRecipes] = useState<Recipe[]>([]);
   const [recommended, setRecommended] = useState<Recipe[]>([]);
   const [recommendedForYou, setRecommendedForYou] = useState<Recipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Applied Filter States (Triggers API)
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+  const [tags, setTags] = useState<{ id: number; name: string }[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
+  const [selectedTags, setSelectedTags] = useState<number[]>([]);
+  
+  // Temp states for Drawer (Draft mode - doesn't trigger API until Apply)
+  const [tempCategories, setTempCategories] = useState<number[]>([]);
+  const [tempTags, setTempTags] = useState<number[]>([]);
+  
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isFiltering, setIsFiltering] = useState(false);
+
   const scrollRefStock = useRef<HTMLDivElement>(null);
   const scrollRefForYou = useRef<HTMLDivElement>(null);
+  const scrollRefGenZ = useRef<HTMLDivElement>(null);
 
   const scroll = (ref: React.RefObject<HTMLDivElement | null>, direction: 'left' | 'right') => {
     if (ref.current) {
@@ -31,22 +49,53 @@ const HomeView = () => {
     }
   };
 
+  const fetchAllRecipes = async (cats = selectedCategories, tgs = selectedTags) => {
+    const query = searchParams.get('search');
+    try {
+      setIsFiltering(true);
+      let data: Recipe[] = [];
+      let genZData: Recipe[] = [];
+      
+      if (cats.length > 0 || tgs.length > 0) {
+        const result = await recipeApi.getRecipesByFilters(cats, tgs);
+        data = result.recipes;
+        genZData = result.genZRecipes;
+      } else if (query) {
+        data = await recipeApi.getRecipesByName(query);
+      } else {
+        data = await recipeApi.getAllRecipes();
+      }
+      
+      setRecipes(data);
+      setGenZRecipes(genZData);
+    } catch (err: any) {
+      console.error('Fetch all recipes error:', err);
+      setError(err.message || 'Failed to load recipes');
+    } finally {
+      setIsFiltering(false);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
-      const query = searchParams.get('search');
       try {
         setIsLoading(true);
         setError(null);
 
-        const [recipesData, recommendedData, recommendedForYouData] = await Promise.all([
-          query ? recipeApi.getRecipesByName(query) : recipeApi.getAllRecipes(),
+        // Fetch filter options and initial recipes in parallel
+        const [filterOptions, recommendedData, recommendedForYouData] = await Promise.all([
+          recipeApi.getFilterOptions(),
           recipeApi.getRecommendedRecipes(),
           recipeApi.getRecommendedRecipesForYou()
         ]);
 
-        setRecipes(recipesData);
+        setCategories(filterOptions.categories);
+        setTags(filterOptions.tags);
         setRecommended(recommendedData);
         setRecommendedForYou(recommendedForYouData);
+        
+        // Initial fetch for All Recipes
+        await fetchAllRecipes();
       } catch (err: any) {
         setError(err.message || 'Failed to load recipes');
       } finally {
@@ -57,13 +106,63 @@ const HomeView = () => {
     fetchData();
   }, [searchParams]);
 
+  // Re-fetch when applied filters change
+  useEffect(() => {
+    fetchAllRecipes(selectedCategories, selectedTags);
+  }, [selectedCategories, selectedTags]);
+
+  // Handlers for Quick Filter Bar (Immediate)
+  const handleToggleCategory = (id: number) => {
+    setSelectedCategories(prev => 
+      prev.includes(id) ? prev.filter(cid => cid !== id) : [...prev, id]
+    );
+  };
+
+  const handleToggleTag = (id: number) => {
+    setSelectedTags(prev => 
+      prev.includes(id) ? prev.filter(tid => tid !== id) : [...prev, id]
+    );
+  };
+
+  // Handlers for Filter Drawer (Draft)
+  const handleTempToggleCategory = (id: number) => {
+    setTempCategories(prev => 
+      prev.includes(id) ? prev.filter(cid => cid !== id) : [...prev, id]
+    );
+  };
+
+  const handleTempToggleTag = (id: number) => {
+    setTempTags(prev => 
+      prev.includes(id) ? prev.filter(tid => tid !== id) : [...prev, id]
+    );
+  };
+
+  const clearAllFilters = () => {
+    setSelectedCategories([]);
+    setSelectedTags([]);
+  };
+
+  const openFilterDrawer = () => {
+    // Sync temp states with current applied filters before opening
+    setTempCategories([...selectedCategories]);
+    setTempTags([...selectedTags]);
+    setIsDrawerOpen(true);
+  };
+
+  const applyDrawerFilters = () => {
+    // Commit temp states to applied states
+    setSelectedCategories(tempCategories);
+    setSelectedTags(tempTags);
+    setIsDrawerOpen(false);
+  };
+
   return (
     <div className="relative font-sans selection:bg-blue-200 overflow-hidden">
       {/* Atmospheric Blobs for Header/Footer Glow */}
       <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-100/50 dark:bg-blue-900/20 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-100/50 dark:bg-purple-900/20 rounded-full blur-3xl pointer-events-none"></div>
 
-      {/* --- CATEGORY BAR --- */}
+      {/* --- CATEGORY BAR (Static/Decorative) --- */}
       <div className="bg-luxury-surface border-b border-luxury-border overflow-x-auto transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-6 py-4 flex gap-8 text-[10px] font-black uppercase tracking-widest text-luxury-text-muted whitespace-nowrap">
           {['All Recipes', 'Low Calorie', 'High Protein', 'Vegan', 'Thai Traditional', 'Desserts', 'Breakfast', 'Dinner'].map((cat) => (
@@ -229,19 +328,138 @@ const HomeView = () => {
         ) : (
           <>
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-3xl font-serif font-bold text-luxury-text">All Recipes</h2>
-              <div className="hidden md:block w-24 h-[1px] bg-luxury-border"></div>
+              <div className="flex flex-col gap-1">
+                <h2 className="text-3xl font-serif font-bold text-luxury-text">All Recipes</h2>
+                {selectedCategories.length > 0 || selectedTags.length > 0 ? (
+                  <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-500">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-luxury-text-muted">Filtering by:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedCategories.map(id => {
+                        const cat = categories.find(c => c.id === id);
+                        return cat ? (
+                          <span key={id} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-luxury-accent-start/10 text-luxury-accent-start border border-luxury-accent-start/20">
+                            {cat.name}
+                          </span>
+                        ) : null;
+                      })}
+                      {selectedTags.map(id => {
+                        const tag = tags.find(t => t.id === id);
+                        return tag ? (
+                          <span key={id} className="text-[10px] font-serif italic px-2 py-0.5 rounded-full bg-luxury-accent-start/10 text-luxury-accent-start border border-luxury-accent-start/20">
+                            {tag.name}
+                          </span>
+                        ) : null;
+                      })}
+                    </div>
+                    <button 
+                      onClick={clearAllFilters}
+                      className="text-[10px] font-bold uppercase tracking-widest text-luxury-text-muted hover:text-luxury-accent-start transition-colors flex items-center gap-1 ml-2"
+                    >
+                      <X className="w-2 h-2" /> Clear All
+                    </button>
+                  </div>
+                ) : (
+                  <div className="h-4" />
+                )}
+              </div>
+              <button
+                onClick={openFilterDrawer}
+                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-white/5 border border-luxury-border rounded-full text-[10px] font-bold uppercase tracking-widest text-luxury-text hover:border-luxury-accent-start transition-all duration-300 shadow-sm"
+              >
+                <Filter className="w-3 h-3" />
+                Filter
+              </button>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-              {recipes.map((recipe) => (
-                <RecipeCard key={recipe.recipeId} recipe={recipe} />
-              ))}
-              {recipes.length === 0 && (
-                <div className="col-span-full text-center py-32 text-gray-400 font-light italic">
-                  No recipes found in our archives.
+
+            {/* --- GEN Z RECOMMENDED CAROUSEL (Embedded in All Recipes) --- */}
+            {genZRecipes.length > 0 && (
+              <section className="mb-12 relative group/carousel animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-luxury-accent-start font-bold text-xs uppercase tracking-widest">
+                      <Zap className="w-3 h-3" />
+                      <span>Trending Now</span>
+                    </div>
+                    <h3 className="text-xl font-serif font-bold text-luxury-text">Gen Z's Choice</h3>
+                  </div>
+                  <div className="hidden md:block w-16 h-[1px] bg-luxury-border"></div>
                 </div>
-              )}
-            </div>
+
+                <div className="relative">
+                  <button
+                    onClick={() => scroll(scrollRefGenZ, 'left')}
+                    className="absolute -left-4 top-1/2 -translate-y-1/2 z-20 p-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md rounded-full shadow-lg text-luxury-text hover:text-luxury-accent-start transition-all duration-300 hover:scale-110 opacity-0 group-hover/carousel:opacity-100 border border-luxury-border"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => scroll(scrollRefGenZ, 'right')}
+                    className="absolute -right-4 top-1/2 -translate-y-1/2 z-20 p-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md rounded-full shadow-lg text-luxury-text hover:text-luxury-accent-start transition-all duration-300 hover:scale-110 opacity-0 group-hover/carousel:opacity-100 border border-luxury-border"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+
+                  <div
+                    ref={scrollRefGenZ}
+                    className="flex overflow-x-auto gap-6 pb-4 snap-x snap-mandatory scrollbar-hide"
+                    style={{
+                      msOverflowStyle: 'none',
+                      scrollbarWidth: 'none',
+                      WebkitOverflowScrolling: 'touch'
+                    }}
+                  >
+                    {genZRecipes.map((recipe) => (
+                      <div key={recipe.recipeId} className="snap-start shrink-0">
+                        <RecipeCard recipe={recipe} variant="compact" />
+                      </div>
+                    ))}
+                  </div>
+                  <style jsx>{`
+                    div::-webkit-scrollbar {
+                      display: none;
+                    }
+                  `}</style>
+                </div>
+              </section>
+            )}
+
+            {isFiltering ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+                {[...Array(12)].map((_, i) => (
+                  <div key={i} className="aspect-[4/5] bg-luxury-surface animate-pulse rounded-xl border border-luxury-border" />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                {(() => {
+                  // Merge Gen Z recipes to the top, removing duplicates from the main list
+                  const genZIds = new Set(genZRecipes.map(r => r.recipeId));
+                  const filteredMainRecipes = recipes.filter(r => !genZIds.has(r.recipeId));
+                  const combined = [...genZRecipes, ...filteredMainRecipes];
+                  
+                  return combined.map((recipe) => (
+                    <RecipeCard key={recipe.recipeId} recipe={recipe} />
+                  ));
+                })()}
+                {recipes.length === 0 && genZRecipes.length === 0 && (
+                  <div className="col-span-full text-center py-32 text-gray-400 font-light italic">
+                    No recipes found in our archives.
+                  </div>
+                )}
+              </div>
+            )}
+
+            <FilterDrawer
+              isOpen={isDrawerOpen}
+              onClose={() => setIsDrawerOpen(false)}
+              categories={categories}
+              tags={tags}
+              selectedCategories={tempCategories}
+              selectedTags={tempTags}
+              onToggleCategory={handleTempToggleCategory}
+              onToggleTag={handleTempToggleTag}
+              onApply={applyDrawerFilters}
+            />
           </>
         )}
       </main>

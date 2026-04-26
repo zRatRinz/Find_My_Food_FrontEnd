@@ -230,4 +230,71 @@ export class RecipeRepository implements IRecipeRepository {
       throw error;
     }
   }
+
+  async getFilterOptions(): Promise<{ categories: any[], tags: any[] }> {
+    try {
+      const response = await fetch(`${this.baseUrl}/recipe/getRecipeFilterOption`, { 
+        headers: await this.getAuthHeaders() 
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch filter options');
+      }
+
+      const result = (await response.json()) as StandardResponse<{ categories: any[], tags: any[] }>;
+
+      if (result.status !== 'success' || !result.data) {
+        throw new Error(result.message || 'Invalid response from filter options API');
+      }
+
+      return {
+        categories: (result.data.categories || []).map(cat => ({
+          id: cat.category_id,
+          name: cat.category_name
+        })),
+        tags: (result.data.tags || []).map(tag => ({
+          id: tag.tag_id,
+          name: tag.tag_name
+        }))
+      };
+    } catch (error) {
+      console.error('RecipeRepository.getFilterOptions error:', error);
+      throw error;
+    }
+  }
+
+  async getRecipesByFilters(categories: number[], tags: number[]): Promise<{ recipes: Recipe[], genZRecipes: Recipe[] }> {
+    try {
+      const params = new URLSearchParams();
+      categories.forEach(id => params.append('categories', id.toString()));
+      tags.forEach(id => params.append('tags', id.toString()));
+
+      const response = await fetch(`${this.baseUrl}/recipe/getSearchRecipeFilterOption?${params.toString()}`, {
+        method: 'GET',
+        headers: await this.getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = (await response.json()) as StandardResponse<{ recipes: RecipeDTO[], gen_z_recipes: RecipeDTO[] }>;
+
+      if (result.status !== 'success') {
+        throw new Error(result.message || 'An unknown error occurred while filtering recipes');
+      }
+
+      if (!result.data || !Array.isArray(result.data.recipes)) {
+        throw new Error('Invalid data format received from API: recipes list is missing');
+      }
+
+      return {
+        recipes: result.data.recipes.map((dto) => RecipeMapper.toDomain(dto)),
+        genZRecipes: (result.data.gen_z_recipes || []).map((dto) => RecipeMapper.toDomain(dto))
+      };
+    } catch (error) {
+      console.error('RecipeRepository.getRecipesByFilters error:', error);
+      throw error;
+    }
+  }
 }

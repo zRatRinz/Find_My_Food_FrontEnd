@@ -76,7 +76,7 @@ export default function ScanPage() {
         </p>
         <Link
           href="/login"
-          className="px-8 py-3 bg-luxury-text text-white rounded-full hover:bg-luxury-text/90 transition-all duration-300"
+          className="px-8 py-3 bg-luxury-gradient text-white rounded-full hover:opacity-90 transition-all duration-300 shadow-lg"
         >
           Sign In
         </Link>

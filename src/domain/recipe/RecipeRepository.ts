@@ -7,4 +7,6 @@ export interface IRecipeRepository {
   getMyCreatedRecipes(): Promise<Recipe[]>;
   getRecommendedRecipes(): Promise<Recipe[]>;
   getRecipesByIngredientsAndTag(ingredients: string[], tagIds: number[]): Promise<Recipe[]>;
+  getFilterOptions(): Promise<{ categories: any[], tags: any[] }>;
+  getRecipesByFilters(categories: number[], tags: number[]): Promise<Recipe[]>;
 }
