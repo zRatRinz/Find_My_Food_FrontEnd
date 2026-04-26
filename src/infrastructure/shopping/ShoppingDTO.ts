@@ -9,6 +9,14 @@ export interface ShoppingItemDTO {
   note: string;
 }
 
+export interface ShoppingIngredientPreviewDTO {
+  ingredient_id: number;
+  item_name: string;
+  recipe_quantity: number;
+  recipe_unit_name: string;
+  user_stock: number | null;
+}
+
 export interface AddShoppingItemInNewShoppingListDTO {
   item_name: string;
   quantity: number;
@@ -61,6 +69,16 @@ export class ShoppingMapper {
       status: dto.status,
       createDate: dto.create_date,
       items: dto.items.map((item) => this.toDomainItem(item)),
+    };
+  }
+
+  static toPreviewDomain(dto: ShoppingIngredientPreviewDTO): ShoppingIngredientPreview {
+    return {
+      ingredientId: dto.ingredient_id,
+      itemName: dto.item_name,
+      recipeQuantity: dto.recipe_quantity,
+      recipeUnitName: dto.recipe_unit_name,
+      userStock: dto.user_stock,
     };
   }
 }

@@ -1,4 +1,5 @@
 import { ShoppingList } from '@/domain/shopping/ShoppingList';
+import { ShoppingIngredientPreview } from '@/domain/shopping/ShoppingIngredientPreview';
 import { IShoppingRepository, CreateShoppingListRequest, AddItemToShoppingListRequest } from '@/domain/shopping/ShoppingRepository';
 import { ShoppingListDTO, ShoppingMapper, CreateNewShoppingListDTO, AddShoppingItemToShoppingListDTO } from './ShoppingDTO';
 import { APP_CONFIG } from '@/infrastructure/common/config';
@@ -206,6 +207,73 @@ export class ShoppingApiRepository implements IShoppingRepository {
       }
     } catch (error) {
       console.error('ShoppingApiRepository.deleteItemFromShoppingList error:', error);
+      throw error;
+    }
+  }
+
+  async getShoppingIngredientPreview(recipeId: number): Promise<ShoppingIngredientPreview[]> {
+    try {
+      const token = localStorage.getItem(APP_CONFIG.auth.tokenKey);
+
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`${this.baseUrl}/shoppingCart/getShoppingIngredientPreview/${recipeId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.status === 'success' && Array.isArray(result.data)) {
+        return result.data.map((dto: any) => ShoppingMapper.toPreviewDomain(dto));
+      } else {
+        throw new Error(result.message || 'Failed to fetch ingredient preview');
+      }
+    } catch (error) {
+      console.error('ShoppingApiRepository.getShoppingIngredientPreview error:', error);
+      throw error;
+    }
+  }
+
+  async addItemToShoppingListByRecipeId(recipeId: number, items: any[]): Promise<void> {
+    try {
+      const token = localStorage.getItem(APP_CONFIG.auth.tokenKey);
+
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`${this.baseUrl}/shoppingCart/addItemToShoppingListByRecipeId`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recipe_id: recipeId,
+          items: items,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.status !== 'success') {
+        throw new Error(result.message || 'Failed to add items to shopping list');
+      }
+    } catch (error) {
+      console.error('ShoppingApiRepository.addItemToShoppingListByRecipeId error:', error);
       throw error;
     }
   }

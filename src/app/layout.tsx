@@ -4,6 +4,7 @@ import "./globals.css";
 import { APP_CONFIG } from '@/infrastructure/common/config';
 import { AuthProvider } from '@/presentation/contexts/AuthContext';
 import { ThemeProvider } from '@/presentation/contexts/ThemeContext';
+import { ToastProvider } from '@/presentation/contexts/ToastContext';
 import Header from '@/presentation/components/Header';
 import Footer from '@/presentation/components/Footer';
 
@@ -39,13 +40,15 @@ export default function RootLayout({
       <body className="h-full transition-colors duration-300 bg-luxury-surface">
         <AuthProvider>
           <ThemeProvider>
-            <div className="min-h-full flex flex-col">
-              <Header />
-              <main className="flex-grow flex flex-col">
-                {children}
-              </main>
-              <Footer />
-            </div>
+            <ToastProvider>
+              <div className="min-h-full flex flex-col">
+                <Header />
+                <main className="flex-grow flex flex-col">
+                  {children}
+                </main>
+                <Footer />
+              </div>
+            </ToastProvider>
           </ThemeProvider>
         </AuthProvider>
       </body>

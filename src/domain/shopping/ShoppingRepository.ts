@@ -1,4 +1,5 @@
 import { ShoppingList } from './ShoppingList';
+import { ShoppingIngredientPreview } from './ShoppingIngredientPreview';
 
 export interface CreateShoppingListRequest {
   shoppingType: 'market' | 'recipe';
@@ -26,4 +27,6 @@ export interface IShoppingRepository {
   deleteShoppingList(listId: number): Promise<void>;
   addItemToShoppingList(request: AddItemToShoppingListRequest): Promise<void>;
   deleteItemFromShoppingList(itemId: number): Promise<void>;
+  getShoppingIngredientPreview(recipeId: number): Promise<ShoppingIngredientPreview[]>;
+  addItemToShoppingListByRecipeId(recipeId: number, items: any[]): Promise<void>;
 }

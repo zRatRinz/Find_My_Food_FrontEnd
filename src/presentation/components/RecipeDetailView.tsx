@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Clock, Heart, Star, User, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Clock, Heart, Star, User, ArrowRight, ShoppingBag } from 'lucide-react';
 import { RecipeDetail } from '../../domain/recipe/Recipe';
 import { RecipeRepository } from '../../infrastructure/recipe/RecipeRepository';
+import { useToast } from '@/presentation/contexts/ToastContext';
 import Link from 'next/link';
+import IngredientPreviewModal from './IngredientPreviewModal';
 
 const recipeApi = new RecipeRepository();
 
@@ -13,6 +15,8 @@ const RecipeDetailView = ({ recipeId }: { recipeId: number }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -61,8 +65,12 @@ const RecipeDetailView = ({ recipeId }: { recipeId: number }) => {
         isLiked: previousIsLiked,
         likeCount: previousLikeCount,
       });
-      alert(err.message || 'Something went wrong while updating like status');
+      showToast(err.message || 'Something went wrong while updating like status', 'error');
     }
+  };
+
+  const handleAddToCart = () => {
+    setIsPreviewOpen(true);
   };
 
   useEffect(() => {
@@ -210,6 +218,14 @@ const RecipeDetailView = ({ recipeId }: { recipeId: number }) => {
                 <h2 className="text-3xl font-serif font-bold text-luxury-text">Ingredients</h2>
               </div>
 
+              <button 
+                onClick={handleAddToCart}
+                className="w-full bg-luxury-gradient text-white py-4 px-6 rounded-2xl font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:scale-[1.02] transition-all duration-300 shadow-lg mb-10 group"
+              >
+                <ShoppingBag className="w-4 h-4 group-hover:animate-bounce" />
+                Add All Ingredients to List
+              </button>
+
               <div className="space-y-12">
                 <div className="space-y-6">
                   <h3 className="text-xs font-black text-luxury-accent-start uppercase tracking-widest">Main Ingredients</h3>
@@ -268,8 +284,15 @@ const RecipeDetailView = ({ recipeId }: { recipeId: number }) => {
           </div>
         </div>
       </section>
+
+      <IngredientPreviewModal 
+        isOpen={isPreviewOpen} 
+        onClose={() => setIsPreviewOpen(false)} 
+        recipeId={recipeId}
+        recipeName={recipe?.recipeName || ''}
+      />
     </div>
   );
-};
+}
 
 export default RecipeDetailView;
