@@ -98,9 +98,6 @@ const Header = () => {
             className="relative cursor-pointer text-luxury-text hover:text-luxury-accent-start transition-colors"
           >
             <ShoppingCart className="w-6 h-6" />
-            <span className="absolute -top-2 -right-2 bg-luxury-gradient text-white text-[9px] font-bold px-1.5 rounded-full">
-              0
-            </span>
           </Link>
           {isLoggedIn ? (
             <div className="flex items-center gap-4">

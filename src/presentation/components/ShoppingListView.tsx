@@ -5,17 +5,22 @@ import Link from 'next/link';
 import { ShoppingCart, Utensils, Plus } from 'lucide-react';
 import { useAuth } from '@/presentation/contexts/AuthContext';
 import { shoppingApi } from '@/infrastructure/shopping/ShoppingApiRepository';
+import { unitApi } from '@/infrastructure/unit/UnitApiRepository';
 import { ShoppingList } from '@/domain/shopping/ShoppingList';
 import { CreateShoppingListRequest } from '@/domain/shopping/ShoppingRepository';
 import ShoppingGroupAccordion from './ShoppingGroupAccordion';
 import CreateShoppingListModal from './CreateShoppingListModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 import AddItemToShoppingListModal from './AddItemToShoppingListModal';
+import { useToast } from '@/presentation/contexts/ToastContext';
+import { Unit } from '@/domain/unit/Unit';
 
 const ShoppingListView = () => {
   const { isLoggedIn } = useAuth();
+  const { showToast } = useToast();
   const [marketLists, setMarketLists] = useState<ShoppingList[]>([]);
   const [recipeLists, setRecipeLists] = useState<ShoppingList[]>([]);
+  const [units, setUnits] = useState<Unit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -41,13 +46,15 @@ const ShoppingListView = () => {
       if (!silent) setIsLoading(true);
       setError(null);
 
-      const [marketData, recipeData] = await Promise.all([
+      const [marketData, recipeData, unitsData] = await Promise.all([
         shoppingApi.getShoppingLists('market'),
         shoppingApi.getShoppingLists('recipe'),
+        unitApi.getUnits(),
       ]);
 
       setMarketLists(marketData);
       setRecipeLists(recipeData);
+      setUnits(unitsData);
     } catch (err: any) {
       setError(err.message || 'Failed to load shopping lists');
     } finally {
@@ -81,12 +88,100 @@ const ShoppingListView = () => {
     setRecipeLists(updateLists(recipeLists));
 
     try {
-      await shoppingApi.updateItemStatus(itemId, isCheck);
-    } catch (err) {
+      const updatedItem = await shoppingApi.updateItemStatus(itemId, isCheck);
+      
+      const syncLists = (lists: ShoppingList[]) => {
+        return lists.map(list => ({
+          ...list,
+          items: list.items.map(item => item.id === itemId ? updatedItem : item)
+        }));
+      };
+      setMarketLists(syncLists(marketLists));
+      setRecipeLists(syncLists(recipeLists));
+      return updatedItem;
+    } catch (err: any) {
       console.error('Failed to update item status:', err);
       setMarketLists(prevMarketLists);
       setRecipeLists(prevRecipeLists);
-      setError('Failed to update item status. Please try again.');
+      showToast(err.message || 'Failed to update item status', 'error');
+      throw err;
+    }
+  };
+
+  const handleQuantityChange = async (itemId: number, quantity: number) => {
+    const updateLists = (lists: ShoppingList[]) => {
+      return lists.map(list => ({
+        ...list,
+        items: list.items.map(item =>
+          item.id === itemId ? { ...item, quantity } : item
+        )
+      }));
+    };
+
+    const prevMarketLists = [...marketLists];
+    const prevRecipeLists = [...recipeLists];
+
+    setMarketLists(updateLists(marketLists));
+    setRecipeLists(updateLists(recipeLists));
+
+    try {
+      const updatedItem = await shoppingApi.updateItemQuantity(itemId, quantity);
+      
+      const syncLists = (lists: ShoppingList[]) => {
+        return lists.map(list => ({
+          ...list,
+          items: list.items.map(item => item.id === itemId ? updatedItem : item)
+        }));
+      };
+      setMarketLists(syncLists(marketLists));
+      setRecipeLists(syncLists(recipeLists));
+      return updatedItem;
+    } catch (err: any) {
+      console.error('Failed to update item quantity:', err);
+      setMarketLists(prevMarketLists);
+      setRecipeLists(prevRecipeLists);
+      showToast(err.message || 'Failed to update item quantity', 'error');
+      throw err;
+    }
+  };
+
+  const handleUnitChange = async (itemId: number, unitId: number) => {
+    const selectedUnit = units.find(u => u.id === unitId);
+    if (!selectedUnit) return;
+
+    const updateLists = (lists: ShoppingList[]) => {
+      return lists.map(list => ({
+        ...list,
+        items: list.items.map(item =>
+          item.id === itemId ? { ...item, unit: selectedUnit.name } : item
+        )
+      }));
+    };
+
+    const prevMarketLists = [...marketLists];
+    const prevRecipeLists = [...recipeLists];
+
+    setMarketLists(updateLists(marketLists));
+    setRecipeLists(updateLists(recipeLists));
+
+    try {
+      const updatedItem = await shoppingApi.updateItemUnit(itemId, unitId);
+      
+      const syncLists = (lists: ShoppingList[]) => {
+        return lists.map(list => ({
+          ...list,
+          items: list.items.map(item => item.id === itemId ? updatedItem : item)
+        }));
+      };
+      setMarketLists(syncLists(marketLists));
+      setRecipeLists(syncLists(recipeLists));
+      return updatedItem;
+    } catch (err: any) {
+      console.error('Failed to update item unit:', err);
+      setMarketLists(prevMarketLists);
+      setRecipeLists(prevRecipeLists);
+      showToast(err.message || 'Failed to update item unit', 'error');
+      throw err;
     }
   };
 
@@ -293,9 +388,12 @@ const ShoppingListView = () => {
                     list={list}
                     type="market"
                     onStatusChange={handleStatusChange}
+                    onQuantityChange={handleQuantityChange}
+                    onUnitChange={handleUnitChange}
                     onDelete={() => handleDeleteListRequest(list)}
                     onAddItem={handleAddItemRequest}
                     onDeleteItem={handleDeleteItemRequest}
+                    units={units}
                   />
                 ))
               ) : (
@@ -332,9 +430,12 @@ const ShoppingListView = () => {
                     list={list}
                     type="recipe"
                     onStatusChange={handleStatusChange}
+                    onQuantityChange={handleQuantityChange}
+                    onUnitChange={handleUnitChange}
                     onDelete={() => handleDeleteListRequest(list)}
                     onAddItem={handleAddItemRequest}
                     onDeleteItem={handleDeleteItemRequest}
+                    units={units}
                   />
                 ))
               ) : (

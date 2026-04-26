@@ -1,19 +1,22 @@
-"use client";
-
 import React, { useState } from 'react';
-import { ChevronDown, Check, Trash2, Plus } from 'lucide-react';
+import { ChevronDown, Trash2, Plus } from 'lucide-react';
 import { ShoppingList, ShoppingItem } from '@/domain/shopping/ShoppingList';
+import ShoppingItemRow from './ShoppingItemRow';
+import { Unit } from '@/domain/unit/Unit';
 
 interface ShoppingGroupAccordionProps {
   list: ShoppingList;
   type: 'market' | 'recipe';
-  onStatusChange: (itemId: number, isCheck: boolean) => void;
+  onStatusChange: (itemId: number, isCheck: boolean) => Promise<ShoppingItem>;
+  onQuantityChange: (itemId: number, quantity: number) => Promise<ShoppingItem>;
+  onUnitChange: (itemId: number, unitId: number) => Promise<ShoppingItem>;
   onDelete: (listId: number) => void;
   onAddItem: (listId: number) => void;
   onDeleteItem: (item: ShoppingItem) => void;
+  units: Unit[];
 }
 
-const ShoppingGroupAccordion = ({ list, type, onStatusChange, onDelete, onAddItem, onDeleteItem }: ShoppingGroupAccordionProps) => {
+const ShoppingGroupAccordion = ({ list, type, onStatusChange, onQuantityChange, onUnitChange, onDelete, onAddItem, onDeleteItem, units }: ShoppingGroupAccordionProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   // Sort items: Unchecked first, Checked last
@@ -23,9 +26,9 @@ const ShoppingGroupAccordion = ({ list, type, onStatusChange, onDelete, onAddIte
   });
 
   return (
-    <div className="mb-4 overflow-hidden rounded-3xl border border-luxury-border bg-white dark:bg-white/5 transition-all duration-300 hover:shadow-lg hover:shadow-luxury-accent-start/5 group/card">
+    <div className={`mb-4 rounded-3xl border border-luxury-border bg-white dark:bg-white/5 transition-all duration-300 hover:shadow-lg hover:shadow-luxury-accent-start/5 group/card ${isOpen ? 'overflow-visible' : 'overflow-hidden'}`}>
       {/* Accordion Header */}
-      <div className="flex w-full items-center justify-between p-5 transition-colors hover:bg-luxury-surface/50 dark:hover:bg-white/5">
+      <div className="flex w-full items-center justify-between p-5 transition-colors hover:bg-luxury-surface/50 dark:hover:bg-white/5 rounded-t-3xl">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="flex flex-1 items-center gap-4 text-left"
@@ -34,7 +37,7 @@ const ShoppingGroupAccordion = ({ list, type, onStatusChange, onDelete, onAddIte
             {list.title}
           </h3>
         </button>
-        
+
         <div className="flex items-center gap-2">
           <button
             onClick={() => onAddItem(list.id)}
@@ -63,49 +66,19 @@ const ShoppingGroupAccordion = ({ list, type, onStatusChange, onDelete, onAddIte
           isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
         }`}
       >
-        <div className="overflow-hidden">
+        <div className={`${isOpen ? 'overflow-visible' : 'overflow-hidden'}`}>
           <div className="p-5 pt-0 space-y-3">
             {sortedItems.length > 0 ? (
               sortedItems.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between p-3 rounded-2xl bg-luxury-surface/50 border border-transparent hover:border-luxury-accent-start/20 transition-all duration-200 group"
-                >
-                  <div className="flex items-center gap-3">
-                    {/* Custom Luxury Checkbox */}
-                    <label className="relative flex items-center cursor-pointer group/checkbox">
-                      <input
-                        type="checkbox"
-                        checked={item.isCheck}
-                        className="sr-only"
-                        onChange={(e) => onStatusChange(item.id, e.target.checked)}
-                      />
-                      <div className={`
-                        w-5 h-5 rounded-md border-2 transition-all duration-300 flex items-center justify-center
-                        ${item.isCheck
-                          ? 'bg-luxury-gradient border-transparent scale-110'
-                          : 'border-luxury-border bg-transparent group-hover/checkbox:border-luxury-accent-start'}
-                      `}>
-                        {item.isCheck && <Check className="w-3 h-3 text-white stroke-[3px]" />}
-                      </div>
-                    </label>
-                    <span className={`text-sm font-medium transition-all duration-300 ${item.isCheck ? 'line-through text-luxury-text-muted opacity-50' : 'text-luxury-text'}`}>
-                      {item.name}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-bold text-luxury-text-muted group-hover:text-luxury-accent-start transition-colors">
-                      {item.quantity} {item.unit}
-                    </span>
-                    <button
-                      onClick={() => onDeleteItem(item)}
-                      className="p-1.5 text-luxury-text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200"
-                      title="Delete Item"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
+                <ShoppingItemRow
+                  key={item.id || idx}
+                  item={item}
+                  onStatusChange={onStatusChange}
+                  onQuantityChange={onQuantityChange}
+                  onUnitChange={onUnitChange}
+                  onDeleteItem={onDeleteItem}
+                  units={units}
+                />
               ))
             ) : (
               <p className="text-center py-6 text-sm italic text-luxury-text-muted font-light">

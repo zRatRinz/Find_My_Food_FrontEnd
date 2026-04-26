@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { X, Edit3, ShoppingBag, Check } from 'lucide-react';
+"use client";
+
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Edit3, ShoppingBag, Check, ChevronDown } from 'lucide-react';
 import { ShoppingIngredientPreview } from '@/domain/shopping/ShoppingIngredientPreview';
 import { shoppingApi } from '@/infrastructure/shopping/ShoppingApiRepository';
 import { unitApi } from '@/infrastructure/unit/UnitApiRepository';
@@ -18,6 +20,106 @@ interface IngredientPreviewModalProps {
   recipeId: number;
   recipeName: string;
 }
+
+const UnitSelector = ({ 
+  currentUnit, 
+  units, 
+  onUnitChange, 
+  isSelected 
+}: { 
+  currentUnit: string; 
+  units: Unit[]; 
+  onUnitChange: (unitName: string) => void; 
+  isSelected: boolean;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [dropUp, setDropUp] = useState(false);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const toggleDropdown = () => {
+    if (!isOpen && dropdownRef.current) {
+      const rect = dropdownRef.current.getBoundingClientRect();
+      
+      // Logical Boundaries for Modal
+      const modalHeaderBuffer = 100; 
+      const modalFooterBuffer = 100;
+      const dropdownHeight = 320; // max-h-80
+
+      const usableSpaceAbove = rect.top - modalHeaderBuffer;
+      const usableSpaceBelow = window.innerHeight - rect.bottom - modalFooterBuffer;
+
+      // Smart Flip Logic
+      if (usableSpaceBelow < dropdownHeight && usableSpaceAbove >= dropdownHeight) {
+        setDropUp(true);
+      } else if (usableSpaceAbove < dropdownHeight && usableSpaceBelow >= dropdownHeight) {
+        setDropUp(false);
+      } else {
+        setDropUp(usableSpaceAbove > usableSpaceBelow);
+      }
+
+      setCoords({
+        top: rect.top,
+        left: rect.left,
+        width: rect.width
+      });
+    }
+    setIsOpen(!isOpen);
+  };
+
+  return (
+    <div className="relative group/unit w-24 h-6 flex items-center justify-center" ref={dropdownRef}>
+      <button
+        onClick={toggleDropdown}
+        className={`w-full h-full flex items-center justify-center bg-transparent text-xs font-semibold uppercase tracking-wide cursor-pointer outline-none transition-colors ${
+          isSelected ? 'text-luxury-text hover:text-luxury-accent-start' : 'text-luxury-text-muted'
+        } dark:text-white`}
+      >
+        {currentUnit}
+      </button>
+      <ChevronDown className={`absolute right-1 top-1/2 -translate-y-1/2 w-3 h-3 text-luxury-text-muted pointer-events-none transition-all duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+      
+      {isOpen && (
+        <ul 
+          style={{ 
+            position: 'fixed', 
+            top: dropUp ? coords.top - 320 : coords.top + 24, 
+            left: coords.left, 
+            width: coords.width 
+          }}
+          className={`bg-luxury-surface dark:bg-luxury-charcoal border border-luxury-border rounded-xl shadow-2xl z-[1000] py-1 animate-in fade-in zoom-in-95 duration-200 max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-luxury-border dark:scrollbar-thumb-white/20 scrollbar-track-transparent`}
+        >
+          {units.map(u => (
+            <li 
+              key={u.id}
+              onClick={() => {
+                onUnitChange(u.name);
+                setIsOpen(false);
+              }}
+              className={`px-3 py-2 text-xs font-medium cursor-pointer transition-colors ${
+                currentUnit === u.name 
+                  ? 'bg-luxury-accent-start/10 text-luxury-accent-start' 
+                  : 'text-luxury-text dark:text-white hover:bg-luxury-accent-start/5'
+              }`}
+            >
+              {u.name}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
 
 const IngredientPreviewModal = ({ isOpen, onClose, recipeId, recipeName }: IngredientPreviewModalProps) => {
   const [ingredients, setIngredients] = useState<LocalIngredient[]>([]);
@@ -82,7 +184,7 @@ const IngredientPreviewModal = ({ isOpen, onClose, recipeId, recipeName }: Ingre
 
   const handleConfirmAdd = async () => {
     const selectedItems = ingredients.filter(item => item.isSelected);
-    
+
     if (selectedItems.length === 0) return;
 
     try {
@@ -97,7 +199,7 @@ const IngredientPreviewModal = ({ isOpen, onClose, recipeId, recipeName }: Ingre
       });
 
       await shoppingApi.addItemToShoppingListByRecipeId(recipeId, itemsToSubmit);
-      
+
       showToast(`Successfully added ${selectedItems.length} ingredients to your shopping list!`, 'success');
       onClose();
     } catch (err: any) {
@@ -125,10 +227,10 @@ const IngredientPreviewModal = ({ isOpen, onClose, recipeId, recipeName }: Ingre
       />
 
       {/* Modal Container */}
-      <div className="relative w-full max-w-2xl max-h-[80vh] bg-luxury-surface rounded-3xl shadow-2xl border border-luxury-border overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+      <div className="relative w-full max-w-2xl max-h-[80vh] bg-luxury-surface rounded-3xl shadow-2xl border border-luxury-border overflow-visible flex flex-col animate-in zoom-in-95 duration-300">
 
         {/* Header */}
-        <div className="px-8 py-6 border-b border-luxury-border flex justify-between items-center bg-white/50 dark:bg-black/20 backdrop-blur-md">
+        <div className="px-8 py-6 border-b border-luxury-border flex justify-between items-center bg-white/50 dark:bg-black/20 backdrop-blur-md rounded-t-3xl">
           <div>
             <h3 className="text-2xl font-serif italic text-luxury-text">Review Ingredients</h3>
             <p className="text-xs font-medium text-luxury-text-muted uppercase tracking-widest">
@@ -168,7 +270,7 @@ const IngredientPreviewModal = ({ isOpen, onClose, recipeId, recipeName }: Ingre
             <div className="space-y-6">
               {/* Select All Toggle */}
               <div className="flex justify-end mb-4">
-                <button 
+                <button
                   onClick={toggleSelectAll}
                   className="text-[10px] font-bold uppercase tracking-widest text-luxury-accent-start hover:text-luxury-accent-end transition-colors flex items-center gap-2"
                 >
@@ -221,19 +323,12 @@ const IngredientPreviewModal = ({ isOpen, onClose, recipeId, recipeName }: Ingre
                             : 'bg-transparent border-transparent text-luxury-text-muted'
                         }`}
                       />
-                      <select
-                        value={item.currentUnitName}
-                        onChange={(e) => updateUnit(item.ingredientId, e.target.value)}
-                        className={`text-xs bg-transparent outline-none cursor-pointer transition-colors ${
-                          item.isSelected
-                            ? 'text-luxury-text hover:text-luxury-accent-start'
-                            : 'text-luxury-text-muted'
-                        }`}
-                      >
-                        {units.map(u => (
-                          <option key={u.id} value={u.name}>{u.name}</option>
-                        ))}
-                      </select>
+                      <UnitSelector 
+                        currentUnit={item.currentUnitName}
+                        units={units}
+                        onUnitChange={(unitName) => updateUnit(item.ingredientId, unitName)}
+                        isSelected={item.isSelected}
+                      />
                     </div>
                   </div>
                 ))}
@@ -243,7 +338,7 @@ const IngredientPreviewModal = ({ isOpen, onClose, recipeId, recipeName }: Ingre
         </div>
 
         {/* Footer */}
-        <div className="px-8 py-6 border-t border-luxury-border bg-white/50 dark:bg-black/20 backdrop-blur-md flex gap-4">
+        <div className="px-8 py-6 border-t border-luxury-border bg-white/50 dark:bg-black/20 backdrop-blur-md flex gap-4 rounded-b-3xl">
           <button
             onClick={onClose}
             className="flex-1 py-4 px-6 rounded-2xl font-bold uppercase tracking-widest text-xs text-luxury-text-muted hover:bg-gray-100 dark:hover:bg-gray-800 transition-all"

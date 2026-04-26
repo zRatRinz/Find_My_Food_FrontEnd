@@ -40,7 +40,7 @@ export class ShoppingApiRepository implements IShoppingRepository {
     }
   }
 
-  async updateItemStatus(itemId: number, isCheck: boolean): Promise<void> {
+  async updateItemStatus(itemId: number, isCheck: boolean): Promise<ShoppingItem> {
     try {
       const token = localStorage.getItem(APP_CONFIG.auth.tokenKey);
 
@@ -60,8 +60,84 @@ export class ShoppingApiRepository implements IShoppingRepository {
       if (!response.ok) {
         throw new Error(`API Error: ${response.status} ${response.statusText}`);
       }
+
+      const result = await response.json();
+
+      if (result.status === 'success' && result.data) {
+        return ShoppingMapper.toDomainItemFromUpdate(result.data);
+      } else {
+        throw new Error(result.message || 'Failed to update item status');
+      }
     } catch (error) {
       console.error('ShoppingApiRepository.updateItemStatus error:', error);
+      throw error;
+    }
+  }
+
+  async updateItemQuantity(itemId: number, quantity: number): Promise<ShoppingItem> {
+    try {
+      const token = localStorage.getItem(APP_CONFIG.auth.tokenKey);
+
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`${this.baseUrl}/shoppingCart/updateShoppingItemQuantity/${itemId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ quantity }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.status === 'success' && result.data) {
+        return ShoppingMapper.toDomainItemFromUpdate(result.data);
+      } else {
+        throw new Error(result.message || 'Failed to update item quantity');
+      }
+    } catch (error) {
+      console.error('ShoppingApiRepository.updateItemQuantity error:', error);
+      throw error;
+    }
+  }
+
+  async updateItemUnit(itemId: number, unitId: number): Promise<ShoppingItem> {
+    try {
+      const token = localStorage.getItem(APP_CONFIG.auth.tokenKey);
+
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`${this.baseUrl}/shoppingCartupdateShoppingItemUnit/${itemId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ unit_id: unitId }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.status === 'success' && result.data) {
+        return ShoppingMapper.toDomainItemFromUpdate(result.data);
+      } else {
+        throw new Error(result.message || 'Failed to update item unit');
+      }
+    } catch (error) {
+      console.error('ShoppingApiRepository.updateItemUnit error:', error);
       throw error;
     }
   }
